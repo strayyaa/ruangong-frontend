@@ -1,14 +1,8 @@
 <template>
-    <img :src="imageUrl" :alt="imageDescription" />
-  </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  
-  const imageUrl = ref('https://example.com/image.jpg');
-  const imageDescription = ref('An example image');
-  </script>
-  
-<style scoped>
+    <el-button type="primary">Login</el-button>
+    <div>
+        <h1>Hello From Here</h1>
+    </div>
+</template>
 
-</style>  
+<style></style>  
