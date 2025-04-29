@@ -47,15 +47,19 @@
       <el-menu-item index="3" disabled>Info</el-menu-item>
       <el-menu-item index="4">Orders</el-menu-item>
     </el-menu>
-  </template>
+</template>
   
-  <script lang="ts" setup>
-  import { ref } from 'vue'
-  
-  const activeIndex = ref('1')
-  const activeIndex2 = ref('1')
-  const handleSelect = (key: string, keyPath: string[]) => {
-    console.log(key, keyPath)
-  }
-  </script>
-  
+<script setup>
+import { ref } from 'vue'
+
+const activeIndex = ref('1')
+const activeIndex2 = ref('1')
+
+const handleSelect = (key, keyPath) => {
+  console.log(key, keyPath)
+}
+</script>
+
+<style scoped>
+
+</style>
