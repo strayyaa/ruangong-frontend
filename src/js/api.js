@@ -8,3 +8,13 @@ export const getTest = async () => {
     }
     return res.data;
 }
+
+export const getUserInfoById = async (userId) => {
+    const res = await instance.post('/api/user/info',{
+        userId: userId
+    })
+    if (res.status !== 200) {
+        throw new Error('请求失败');
+    }
+    return res.data;
+}

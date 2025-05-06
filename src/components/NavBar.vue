@@ -1,65 +1,39 @@
 <template>
     <el-menu
-      :default-active="activeIndex"
-      class="el-menu-demo"
+      :default-active="1"
       mode="horizontal"
-      @select="handleSelect"
+      :ellipsis="false"
+      style = "margin-left: 0 auto;margin-right:0 auto;"
     >
-      <el-menu-item index="1">Processing Center</el-menu-item>
-      <el-sub-menu index="2">
-        <template #title>Workspace</template>
-        <el-menu-item index="2-1">item one</el-menu-item>
-        <el-menu-item index="2-2">item two</el-menu-item>
-        <el-menu-item index="2-3">item three</el-menu-item>
-        <el-sub-menu index="2-4">
-          <template #title>item four</template>
-          <el-menu-item index="2-4-1">item one</el-menu-item>
-          <el-menu-item index="2-4-2">item two</el-menu-item>
-          <el-menu-item index="2-4-3">item three</el-menu-item>
-        </el-sub-menu>
-      </el-sub-menu>
-      <el-menu-item index="3" disabled>Info</el-menu-item>
-      <el-menu-item index="4">Orders</el-menu-item>
-    </el-menu>
-    <div class="h-6" />
-    <el-menu
-      :default-active="activeIndex2"
-      class="el-menu-demo"
-      mode="horizontal"
-      background-color="#545c64"
-      text-color="#fff"
-      active-text-color="#ffd04b"
-      @select="handleSelect"
-    >
-      <el-menu-item index="1">Processing Center</el-menu-item>
-      <el-sub-menu index="2">
-        <template #title>Workspace</template>
-        <el-menu-item index="2-1">item one</el-menu-item>
-        <el-menu-item index="2-2">item two</el-menu-item>
-        <el-menu-item index="2-3">item three</el-menu-item>
-        <el-sub-menu index="2-4">
-          <template #title>item four</template>
-          <el-menu-item index="2-4-1">item one</el-menu-item>
-          <el-menu-item index="2-4-2">item two</el-menu-item>
-          <el-menu-item index="2-4-3">item three</el-menu-item>
-        </el-sub-menu>
-      </el-sub-menu>
-      <el-menu-item index="3" disabled>Info</el-menu-item>
-      <el-menu-item index="4">Orders</el-menu-item>
+      <el-menu-item index="1" @click="router.push('/home')">课程管理系统</el-menu-item>
+      
+      <el-menu-item index="2" @click="router.push('/courses')">我的课程</el-menu-item>
+      <el-menu-item index="3"  @click="router.push('/tasks')">我的任务</el-menu-item>
+      <el-menu-item index="4"  @click="router.push('/questions')">我的题目</el-menu-item>
+
+      <el-text size="large" style="margin-top: -4px;">{{ user.name }} {{ identity }},你好！</el-text>
     </el-menu>
 </template>
   
+
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import router from '../router'
 
-const activeIndex = ref('1')
-const activeIndex2 = ref('1')
+const user = ref({ name: '张三' })
+const identity = ref('同学')
 
-const handleSelect = (key, keyPath) => {
-  console.log(key, keyPath)
-}
+import { getUserInfoById } from '../js/api.js'
+onMounted(()=>{
+  user.value = getUserInfoById();
+  if(user.value.identity == 0){
+    identity.value = "老师"
+  }
+})
 </script>
 
 <style scoped>
-
+.el-menu--horizontal > .el-menu-item:nth-child(1) {
+  margin-right: auto;
+}
 </style>
