@@ -23,7 +23,22 @@ const routes = [
         path: '/home',
         name: 'Home',
         component: () => import('../views/home.vue')
-      }
+    },
+    {
+        path: '/courses',
+        name: 'Courses',
+        component: () => import('../views/courses.vue')
+    },
+    {
+        path: '/tasks',
+        name: 'Tasks',
+        component: () => import('../views/tasks.vue')
+    },
+    {
+        path: '/questions',
+        name: 'Questions',
+        component: () => import('../views/questions.vue')
+    }
 ]
 
 const router = createRouter({

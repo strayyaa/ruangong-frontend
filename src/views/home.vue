@@ -108,6 +108,7 @@
 import { ref, computed, onMounted } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import Clock from '../components/Clock.vue';
+import { useRouter } from 'vue-router';
 // 时间卡片组件
 const TimeCard = {
   name: 'TimeCard',
@@ -152,7 +153,7 @@ const todoData = ref([
   { id: 6, title: '准备课件', status: '未完成' },
 ]);
 const todoPage = ref(1);
-const todoPageSize = 6;
+const todoPageSize = 4;
 
 // 课程数据
 const courseData = ref([
@@ -192,7 +193,7 @@ function createQuestion() {
   alert('创建题目');
 }
 function showAllCourses() {
-  alert('显示全部课程');
+  router.push('/courses');
 }
 function showAllTasks() {
   alert('显示全部任务');
@@ -209,6 +210,7 @@ function onTodoRowClick(row) {
 
 <style scoped>
 .home-container {
+  background-size: cover;
   overflow: hidden;
   background: #fff;
   min-height: 100vh;
@@ -275,6 +277,19 @@ function onTodoRowClick(row) {
 :deep(.el-tabs__active-bar) {
   display: none !important;
 }
+:deep(.el-pagination) {
+  --el-color-primary: #222;
+  --el-color-primary-light-3: #888;
+  --el-color-primary-light-5: #bbb;
+  --el-color-primary-light-7: #e0e0e0;
+}
+:deep(.el-pagination .el-pager li.is-active) {
+  background: #222;
+  color: #fff;
+}
+:deep(.el-pagination .el-pager li) {
+  color: #222;
+}
 .role-switch-group {
   display: flex;
   gap: 0;
@@ -318,7 +333,7 @@ function onTodoRowClick(row) {
 .todo-area-flex {
   display: flex;
   gap: 32px;
-  height: 380px;
+  height: 280px;
 }
 .todo-table-area {
   flex: 1;
@@ -381,14 +396,14 @@ function onTodoRowClick(row) {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 40px 40px;
+  gap: 50px 20px;
   width: 100%;
   height: 360px;
   align-items: stretch;
   justify-items: stretch;
 }
 .course-card {
-  width: 100%;
+  width: 85%;
   min-height: 120px;
   height: 100%;
   background: #fff;
