@@ -1,5 +1,5 @@
 <template>
-  <NavBar />
+  <NavBar active="2"/>
   <div class="courses-container">
     <div class="courses-header">
       <div class="title">课程列表</div>

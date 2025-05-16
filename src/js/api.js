@@ -18,3 +18,22 @@ export const getUserInfoById = async (userId) => {
     }
     return res.data;
 }
+export const getCourseInfoById = async (courseId) => {
+    const res = await instance.post('/api/course/info',{
+        courseId: courseId
+    })
+    if (res.status !== 200) {
+        throw new Error('请求失败');
+    }
+    return res.data;
+}
+export const createClass = async (courseId, className) => {
+    const res = await instance.post('/api/class/create',{
+        courseId: courseId,
+        className: className
+    })
+    if (res.status !== 200) {
+        throw new Error('请求失败');
+    }
+    return res.data;
+}

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import login from "../views/login.vue";
 import test from "../views/test.vue";
 import homepage from '../views/homepage.vue';
+import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
 
 const routes = [
     {
@@ -38,6 +39,11 @@ const routes = [
         path: '/questions',
         name: 'Questions',
         component: () => import('../views/questions.vue')
+    },
+    {
+        path:'/course/:id',
+        name:'courseInfo',
+        component: () => import('../views/courseInfo.vue')
     }
 ]
 

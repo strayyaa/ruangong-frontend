@@ -1,4 +1,4 @@
-<!-- 这个文件仅用于测试 -->
+<!-- Intro Page -->
 
 <template>
     <el-container>
@@ -19,6 +19,7 @@
                     'background-color': backcolor,
                     }"
                 class="loginbtn"
+                @click="router.push('/login')"
             >登录</el-button>
         </el-header>
         <el-main>
@@ -35,6 +36,7 @@
                     class="register-btn"
                     @mouseenter="registerMouseEnter"
                     @mouseleave="registerMouseLeave"
+                    @click="router.push('/register')"
                 >->注册成为新用户</el-button>
             </div>
             
@@ -45,20 +47,47 @@
                   src="../assets/homepage_teacher2.jpg" 
                   alt="教学场景"
                   class="main-image"
-                  @mouseenter="imgMouseEnter"
-                  @mouseleave="imgMouseLeave"
+                  @mouseenter='imgMouseEnter(".main-image")'
+                  @mouseleave='imgMouseLeave(".main-image")'
+                  @click="router.push('/login')"
                 >
-                
                 <div class="content-text">
-                  <h2>优质在线教育平台</h2>
-                  <p>我们提供覆盖全学科的精品课程，由行业专家和资深教师团队精心打造。采用互动式教学模式，结合AI智能学习系统，帮助学员高效掌握知识要点。</p>
-                  <p>特色服务包括：</p>
-                  <ul>
-                    <li>• 个性化学习路径规划</li>
-                    <li>• 实时在线答疑系统</li>
-                    <li>• 学习进度智能追踪</li>
-                    <li>• 多终端同步学习</li>
-                  </ul>
+                  <h2>使用我们的课程管理平台</h2>
+                  <p>提升课程管理的效率，使学生和老师交互更加容易。</p>
+                </div>
+
+                <div class="second-content-container">
+                  <!-- 教师板块 -->
+                  <div class="content-column">
+                    <img
+                      src="../assets/homepage_teacher.jpg"
+                      alt="老师图片"
+                      class="second-image"
+                      id="second-teacher-image"
+                      @mouseenter='imgMouseEnter("#second-teacher-image")'
+                      @mouseleave='imgMouseLeave("#second-teacher-image")'
+                      @click="router.push('/login')">
+                    <div class="second-content-text">
+                      <h2>作为老师</h2>
+                      <p>你可以管理你的课程，为每个班级管理进度，上传资料或分配任务给学生，并生成反馈报告，直观了解所有学生的情况。</p>
+                    </div>
+                  </div>
+
+                  <!-- 学生板块 -->
+                  <div class="content-column">
+                    <img
+                      src="../assets/homepage_student.jpg"
+                      alt="学生图片"
+                      class="second-image"
+                      id="second-student-image"
+                      @mouseenter='imgMouseEnter("#second-student-image")'
+                      @mouseleave='imgMouseLeave("#second-student-image")'
+                      @click="router.push('/login')">
+                    <div class="second-content-text">
+                      <h2>作为学生</h2>
+                      <p>你可以查看班级进度，完成老师布置的任务，查看老师上传的资料，生成对应的任务报告，还可以收集错题和收藏题目。</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -73,6 +102,7 @@
 <script setup>
 import { onMounted,onUnmounted, ref } from 'vue'
 import { animate,createAnimatable} from 'animejs';
+import router from '../router'
 
 
 const wordcolor = ref('rgba(0,0,0,1)')
@@ -94,7 +124,6 @@ const handleScroll = () => {
   headerBlur.value = Math.min(currentScroll / 50, 10)
   
   
-  lastScroll = currentScroll
 }
 
 
@@ -149,16 +178,16 @@ const registerMouseLeave = () => {
 };
 
 //图片动画
-const imgMouseEnter = () => {
-  animate('.main-image', {
+const imgMouseEnter = (str) => {
+  animate(str, {
     scale: 1.05,
     boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
     duration: 300,
     easing: 'easeOutExpo'
   });
 };
-const imgMouseLeave = () => {
-  animate('.main-image', {
+const imgMouseLeave = (str) => {
+  animate(str, {
     scale: 1,
     boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
     duration: 300,
@@ -295,16 +324,37 @@ onUnmounted(() => {
 }
 
 .main-image {
-  width: 50%;
+  width: 70%;
   max-width: 1200px;
   height: auto;
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   transform: translateZ(0); /* 优化动画性能 */
 }
+.second-content-container {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  max-width: 1200px;
+  width: 70%;
+  margin: 0 auto;
+}
+
+.content-column {
+  flex: 1; /* 等分容器 */
+  max-width: 600px; /* 控制最大宽度 */
+}
+.second-image{
+  width:90%;
+  margin:0 auto;
+  max-width: 500px;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transform: translateZ(0);
+}
 
 .content-text {
-  width: 50%;
+  width: 70%;
   max-width: 1200px;
   padding: 40px;
   background: rgba(255,255,255,0.95);
@@ -312,6 +362,16 @@ onUnmounted(() => {
   /* box-shadow: 0 10px 30px rgba(0,0,0,0.1); */
   margin-top: 0px; /* 与图片重叠 */
   z-index: 2;
+}
+
+.second-content-text {
+  width: 100%;
+  max-width: 500px;
+  padding: 40px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  /* box-shadow: 0 10px 30px rgba(0,0,0,0.1); */
+  margin-top: -50px; /* 与图片重叠 */
 }
 
 .content-text h2 {
@@ -324,17 +384,19 @@ onUnmounted(() => {
   color: #666;
   line-height: 1.8;
   margin: 1rem 0;
+  font-size:1.5rem;
+}
+.second-content-text h2 {
+  color: #2c3e50;
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
 }
 
-.content-text ul {
-  padding-left: 2rem;
-  margin: 1.5rem 0;
-}
-
-.content-text li {
-  color: #409EFF;
-  margin: 0.8rem 0;
-  font-size: 1.1rem;
+.second-content-text p {
+  color: #666;
+  line-height: 1.8;
+  margin: 1rem 0;
+  font-size:1.5rem;
 }
 
 /* 有关鼠标移入图片时的动画效果 */
