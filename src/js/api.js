@@ -37,3 +37,12 @@ export const createClass = async (courseId, className) => {
     }
     return res.data;
 }
+export const getClassInfoById = async (classId) => {
+    const res = await instance.post('/api/class/info',{
+        classId: classId
+    })
+    if (res.status !== 200) {
+        throw new Error('请求失败');
+    }
+    return res.data;
+}

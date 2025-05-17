@@ -24,6 +24,63 @@
         @click="dealWithButtonClick"
     >->添加课程助教/老师</el-button>
 
+    <el-button
+        v-if = "status == 3"
+        class="register-btn"
+        :style = "{top: distanceOfButton}"
+        @mouseenter="registerMouseEnter"
+        @mouseleave="registerMouseLeave"
+        @click="dealWithButtonClick"
+    >->选择课程</el-button>
+
+    <el-drawer
+      title="添加助教/老师"
+      v-model="drawerOfAddAssAndTea"
+      :direction="'rtl'"
+      :before-close="(done) => { drawerOfAddAssAndTea = false; done(); }"
+      style="z-index: 1001;"
+      :append-to-body="true">
+      <div style="margin-left: 20px;margin-top: 0px;">
+        <el-button 
+        style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
+        @click="drawerChangeAssAndTea">{{ drawerButtonChangeAssandTeaWord }}</el-button>
+        <div>
+          <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">搜索{{drawerIsAssistant}}：</span>
+          <el-input
+            v-model="drawerSearchTextOfAssAndTea"
+            placeholder="搜索信息"
+            clearable
+            style="width: 300px; margin-bottom: 10px;"
+          />
+        </div>
+        <el-card v-for="assAndTea in drawerPagedAssAndTea" :key="assAndTea.id" class="card">
+          <div class="card-row">
+            <!-- 左侧内容 -->
+            <div class="card-info">
+              <span class="drawer-card-word">{{ assAndTea.id }}</span>
+              <span class="drawer-card-word">{{ assAndTea.username }}</span>
+              <span class="drawer-card-word">{{ assAndTea.name }}</span>
+              <span class="drawer-card-word">{{ assAndTea.email }}</span>
+            </div>
+
+            <!-- 右侧按钮 -->
+            <div class="card-actions">
+              <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddAssAndTea(assAndTea.id)">添加</span></el-button>
+            </div>
+          </div>
+        </el-card>
+        <el-pagination
+          v-if="drawerFilteredAssAndTea.length > pageSize"
+          layout="prev, pager, next"
+          :total="drawerFilteredAssAndTea.length"
+          :page-size="pageSize"
+          :current-page="drawerCurrentPageOfAssAndTea"
+          @current-change="handlePageChangeOfAssAndTea"
+          style="margin-top: 20px; text-align: center;">
+        </el-pagination>
+      </div>
+    </el-drawer>
+
   </div>
 
   <div class="tabs-container">
@@ -44,37 +101,17 @@
               style="width: 300px; margin-bottom: 20px;"
             />
           </div>
-          <el-descriptions border style="margin-bottom: 2px;">
-            <el-descriptions-item>
-              <template #label>
-                <div class = "descriptions-label" style="text-align: center;">
-                  课程学生信息表
-                </div>
-              </template>
-            </el-descriptions-item>
-          </el-descriptions>
           <el-descriptions 
-          v-for="student in pagedStudents" :key="student.id" border style="margin-bottom: 2px;" 
-          class="descriptions"
-          @click="goToProfile(student.id)">
+           border style="margin-bottom: 2px;" 
+          class="descriptions">
             <el-descriptions-item>
               <template #label>
-                <div class = "descriptions-label">
+                <div class = "descriptions-content">
                   用户ID
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ student.id }}
-              </div>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template #label>
-                <div class = "descriptions-label">
-                  用户名
-                </div>
-              </template>
-              <div class="descriptions-content">
-                {{ student.username }}
+                <strong>用户名</strong>
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -84,17 +121,7 @@
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ student.name }}
-              </div>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template #label>
-                <div class = "descriptions-label">
-                  邮箱
-                </div>
-              </template>
-              <div class="descriptions-content">
-                {{ student.email }}
+                邮箱
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -104,7 +131,41 @@
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ student.class }}
+              </div>
+            </el-descriptions-item>
+          </el-descriptions>
+
+          <el-descriptions 
+          v-for="student in pagedStudents" :key="student.id" border style="margin-bottom: 2px;" 
+          class="descriptions"
+          @click="goToProfile(student.id)">
+            <el-descriptions-item>
+              <template #label>
+                <div class = "descriptions-content">
+                  {{ student.id }}
+                </div>
+              </template>
+              <div class="descriptions-content">
+                <strong>{{ student.username }}</strong>
+              </div>
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template #label>
+                <div class = "descriptions-label">
+                  {{ student.name }}
+                </div>
+              </template>
+              <div class="descriptions-content">
+                {{ student.email }}
+              </div>
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template #label>
+                <div class = "descriptions-label">
+                  {{ student.class }}
+                </div>
+              </template>
+              <div class="descriptions-content">
               </div>
             </el-descriptions-item>
           </el-descriptions>
@@ -172,37 +233,17 @@
               style="width: 300px; margin-bottom: 10px;"
             />
           </div>
-          <el-descriptions border style="margin-bottom: 2px;">
-            <el-descriptions-item>
-              <template #label>
-                <div class = "descriptions-label" style="text-align: center;">
-                  课程{{isAssistant}}信息表
-                </div>
-              </template>
-            </el-descriptions-item>
-          </el-descriptions>
           <el-descriptions 
-          v-for="assAndTea in pagedAssAndTea" :key="assAndTea.id" border style="margin-bottom: 2px;" 
-          class="descriptions"
-          @click="goToProfile(assAndTea.id)">
+           border style="margin-bottom: 2px;" 
+          class="descriptions">
             <el-descriptions-item>
               <template #label>
-                <div class = "descriptions-label">
+                <div class = "descriptions-content">
                   用户ID
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ assAndTea.id }}
-              </div>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template #label>
-                <div class = "descriptions-label">
-                  用户名
-                </div>
-              </template>
-              <div class="descriptions-content">
-                {{ assAndTea.username }}
+                <strong>用户名</strong>
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -212,13 +253,37 @@
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ assAndTea.name }}
+                邮箱
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  邮箱
+                  班级
+                </div>
+              </template>
+              <div class="descriptions-content">
+              </div>
+            </el-descriptions-item>
+          </el-descriptions>
+          <el-descriptions 
+          v-for="assAndTea in pagedAssAndTea" :key="assAndTea.id" border style="margin-bottom: 2px;" 
+          class="descriptions"
+          @click="goToProfile(assAndTea.id)">
+            <el-descriptions-item>
+              <template #label>
+                <div class = "descriptions-content">
+                  {{ assAndTea.id }}
+                </div>
+              </template>
+              <div class="descriptions-content">
+                <strong>{{ assAndTea.username }}</strong>
+              </div>
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template #label>
+                <div class = "descriptions-label">
+                  {{ assAndTea.name }}
                 </div>
               </template>
               <div class="descriptions-content">
@@ -228,14 +293,13 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  负责班级
+                  <span class = "descriptions-content" v-if="assAndTea.classes.length == 0">无</span>
+                  <span class="descriptions-content" v-for="(cls,index) in assAndTea.classes" :key="cls">
+                    {{ cls }}
+                  <span v-if="index!=assAndTea.classes.length-1">, </span>
+                  </span>
                 </div>
               </template>
-              <span class = "descriptions-content" v-if="assAndTea.classes.length == 0">无</span>
-              <span class="descriptions-content" v-for="(cls,index) in assAndTea.classes" :key="cls">
-                {{ cls }}
-                <span v-if="index!=assAndTea.classes.length-1">, </span>
-              </span>
             </el-descriptions-item>
           </el-descriptions>
           <el-pagination
@@ -265,7 +329,7 @@
             <span class="cardWord"><strong>上传时间</strong></span>
             <span class="cardWord"><strong>类型</strong></span>
           </el-card>
-          <el-card v-for="res in filteredResources" :key="res.code" class="card">
+          <el-card v-for="res in pagedResources" :key="res.code" class="card">
             <div class="card-row">
               <!-- 左侧内容 -->
               <div class="card-info">
@@ -285,15 +349,32 @@
               </div>
             </div>
           </el-card>
+          <el-pagination
+            v-if="filteredResources.length > pageSize"
+            layout="prev, pager, next"
+            :total="filteredResources.length"
+            :page-size="pageSize"
+            :current-page="currentPageOfRes"
+            @current-change="handlePageChangeOfRes"
+            style="margin-top: 20px; text-align: center;">
+          </el-pagination>
 
           <el-drawer
             title="查询文件历史"
             v-model="drawerOfSearchHistory"
             :direction="'btt'"
-            :before-close="(done) => { drawerOfCreatingClass = false; done(); }"
+            :before-close="(done) => { drawerOfSearchHistory = false; done(); }"
             style="z-index: 1001;"
             :append-to-body="true"
             :size="'50%'" >
+              <el-card class="card">
+                <span class="cardWord"><strong>资源编码</strong></span>
+                <span class="cardWord"><strong>名称</strong></span>
+                <span class="cardWord"><strong>公开</strong></span>
+                <span class="cardWord"><strong>类型</strong></span>
+                <span class="cardWord"><strong>上传时间</strong></span>
+                <span class="cardWord"><strong>类型</strong></span>
+              </el-card>
               <el-card v-for="res in historyResources" :key="res.code" class="card">
               <div class="card-row">
                 <!-- 左侧内容 -->
@@ -415,18 +496,84 @@ const imgMouseLeave = (str) => {
   });
 };
 
+const drawerOfAddAssAndTea = ref(false);
+const drawerSearchTextOfAssAndTea = ref('');
+const allTheStudents = ref([
+  { id: 101, username: 'stuA', name: '张三', email: 'zs@mail.com' },
+  { id: 102, username: 'stuB', name: '李四', email: 'ls@mail.com'},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com'},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com'},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com'},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com'},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com'},
+]);
+const allTheTeachers = ref([
+  { id: 301, username: 'tchA', name: '赵六', email: 'zl@mail.com'}
+]);
+const drawerIsAssistant = ref("助教");
+const drawerButtonChangeAssandTeaWord = computed(() => {
+  if(drawerIsAssistant.value == "助教"){
+    return "切换到老师";
+  }else{
+    return "切换到助教";
+  }
+});
+const drawerChangeAssAndTea = () => {
+  if(drawerIsAssistant.value == "助教"){
+    drawerIsAssistant.value = "老师";
+  }else{
+    drawerIsAssistant.value = "助教";
+  }
+};
+const drawerFilteredAssAndTea = computed(() => {
+  const keyword = drawerSearchTextOfAssAndTea.value.trim().toLowerCase()
+
+  return (drawerIsAssistant.value == "助教" ? allTheStudents : allTheTeachers).value
+    .filter(student => {
+      // 匹配任意字段
+      return Object.values(student).some(value =>
+        String(value).toLowerCase().includes(keyword)
+      )
+    })
+    .sort((a, b) => {
+      // 先按 class 排序（字符串），再按 id 排序（数字）
+      return a.id - b.id
+    })
+})
+const drawerCurrentPageOfAssAndTea = ref(1)
+const drawerPagedAssAndTea = computed(() => {
+  const start = (drawerCurrentPageOfAssAndTea.value - 1) * pageSize
+  return drawerFilteredAssAndTea.value.slice(start, start + pageSize)
+})
+const drawerAddAssAndTea = (id) => {
+  ElMessage({
+    message: '添加成功',
+    type: 'success',
+    duration: 2000
+  });
+}
+
 //待完成
 const dealWithButtonClick = () => {
   if(status.value == 1){
 
   }
+  if(status.value == 0){
+    drawerOfAddAssAndTea.value = true;
+  }
 }
 
 
 const navItems = computed(() => {
-  return [0, 2, 4].includes(status.value)
-    ? ['学生', '班级', '助教/老师', '资源']
-    : ['助教/老师','资源'];
+  if(status.value == 1){
+    return ['助教/老师','资源'];
+  }
+  if(status.value == 0||status.value == 2||status.value == 4){
+    return ['学生', '班级', '助教/老师', '资源'];
+  }
+  if(status.value == 3){
+    return ['助教/老师'];
+  }
 });
 
 const currentTab = ref('助教/老师');
@@ -569,6 +716,14 @@ const sampleResources = ref([
 const filteredResources = computed(() =>
   sampleResources.value.filter((r) => selectedTags.value.includes(r.tag))
 );
+const currentPageOfRes = ref(1);
+const pagedResources = computed(() => {
+  const start = (currentPageOfRes.value - 1) * pageSize
+  return filteredResources.value.slice(start, start + pageSize)
+})
+const handlePageChangeOfRes = (page) => {
+  currentPageOfRes.value = page
+}
 
 const historyResources = ref([
   { id:0,url:"",code: 'R001', name: '实验一', public: true, type: 'PDF', date: '2025-05-01', tag: '实验' },
@@ -696,10 +851,12 @@ onUnmounted(() => {
   color: #424242;
   font-size: 1.2rem;
   font-weight: bold;
+  width: 300px;
 }
 .descriptions-content{
   color: #424242;
   font-size: 1.2rem;
+  width: 250px;
 }
 .class-box {
   height: 200px;
@@ -744,6 +901,14 @@ onUnmounted(() => {
   margin-right: 10px; 
   display: inline-block;
   width: 140px;
+}
+.drawer-card-word{
+  font-size: 1rem;
+  font-weight: bold;
+  margin-left: 20px;
+  margin-right: 10px; 
+  display: inline-block;
+  width: 40px;
 }
 .cardButton{
   margin-top: -50px;
