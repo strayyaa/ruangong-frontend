@@ -1,478 +1,475 @@
 <template>
   <NavBar />
-  <div class="home-container">
-    <!-- 顶部Tab区 -->
-    <div class="tab-center-wrapper">
-      <el-tabs
-        v-model="activeTab"
-        class="custom-tabs"
-        @tab-click="handleTabClick"
-      >
-        <el-tab-pane
-          v-for="tab in tabs"
-          :key="tab.name"
-          :label="tab.label"
-          :name="tab.name"
-          @mouseenter="hoverTab = tab.name"
-          @mouseleave="hoverTab = ''"
-        >
-        </el-tab-pane>
-      </el-tabs>
-    </div>
+  <div class="background-layer">
+    <h1 class="mainTitle">首页</h1>
+  </div>
 
-    <!-- 工作区内容 -->
-    <div class="work-area">
-      <!-- 待办区 -->
-      <div v-if="activeTab === 'todo'" class="todo-area-flex">
-        <!-- 左侧表格 -->
-        <div class="todo-table-area">
-          <div class="area-title">待办事项</div>
-          <el-table
-            :data="todoData.slice((todoPage-1)*todoPageSize, todoPage*todoPageSize)"
-            border
-            stripe
-            style="width: 100%;min-height: 400px;"
-            class="custom-table"
-            @row-click="onTodoRowClick"
-            row-class-name="todo-row"
-          >
-            <el-table-column prop="title" label="事项" />
-            <el-table-column prop="status" label="状态" />
-          </el-table>
-          <div class="pagination-box">
-            <el-pagination
-              background
-              layout="prev, pager, next"
-              :total="todoData.length"
-              :page-size="todoPageSize"
-              v-model:current-page="todoPage"
-            />
+  <div class="tabs-container">
+    <el-tabs v-model="currentTab" class="main-tabs">
+      <!-- 我的待办 Tab -->
+      <el-tab-pane name="todo">
+        <template #label>
+          <span class="component-title">我的待办</span>
+        </template>
+        <div class="module-content">
+          <h2 class="module-title">{{ isStudent ? '待完成任务' : '待批改任务' }}</h2>
+          <div class="card-list">
+            <el-card v-for="item in pagedTodoItems" :key="item.id" class="card">
+              <div class="card-row">
+                <div class="card-info">
+                  <span class="cardWord">{{ item.title }}</span>
+                  <span class="cardWord">{{ item.dueDate }}</span>
+                </div>
+                <div class="card-actions">
+                  <el-button class="cardButton" @click="goToTodoItem(item)">查看详情</el-button>
+                </div>
+              </div>
+            </el-card>
+          </div>
+          <el-pagination
+            v-if="filteredTodoItems.length > pageSize"
+            layout="prev, pager, next"
+            :total="filteredTodoItems.length"
+            :page-size="pageSize"
+            :current-page="currentTodoPage"
+            @current-change="handleTodoPageChange"
+            style="margin-top: 20px; text-align: center;"
+          />
+        </div>
+      </el-tab-pane>
+
+      <!-- 课程模块 Tab -->
+      <el-tab-pane name="courses">
+        <template #label>
+          <span class="component-title">我的课程</span>
+        </template>
+        <div class="module-content">
+          <div class="module-header">
+            <h2 class="module-title">我的课程</h2>
+            <div class="module-actions">
+              <el-button v-if="isTeacher" class="create-button" @click="createCourse">创建课程</el-button>
+              <el-button class="all-button" @click="goToCourses">全部</el-button>
+            </div>
+          </div>
+          <div class="card-list">
+            <el-card v-for="course in courses.slice(0, displayLimit)" :key="course.id" class="card">
+              <div class="card-row">
+                <div class="card-info">
+                  <span class="cardWord">{{ course.name }}</span>
+                  <span class="cardWord">{{ course.teacher }}</span>
+                  <span class="cardWord">{{ course.time }}</span>
+                </div>
+                <div class="card-actions">
+                  <el-button class="cardButton" @click="goToCourse(course.id)">进入课程</el-button>
+                </div>
+              </div>
+            </el-card>
           </div>
         </div>
-        <!-- 右侧时间 -->
-        <div class="todo-time-area">
-          <Clock />
-        </div>
-      </div>
+      </el-tab-pane>
 
-      <!-- 课程区 -->
-      <div v-if="activeTab === 'course'" class="course-area">
-        <div class="area-header">
-          <div class="area-title">课程</div>
-          <!-- 助教身份时显示身份切换按钮 -->
-          <div v-if="isAssistant" class="role-switch-group">
-            <el-button :type="courseRole==='student'?'primary':'default'" @click="courseRole='student'">作为学生</el-button>
-            <el-button :type="courseRole==='assistant'?'primary':'default'" @click="courseRole='assistant'">作为助教</el-button>
+      <!-- 任务模块 Tab -->
+      <el-tab-pane name="tasks">
+        <template #label>
+          <span class="component-title">我的任务</span>
+        </template>
+        <div class="module-content">
+          <div class="module-header">
+            <h2 class="module-title">我的任务</h2>
+             <div class="module-actions">
+              <el-button v-if="isTeacher" class="create-button" @click="createTask">创建任务</el-button>
+              <el-button class="all-button" @click="goToTasks">全部</el-button>
+            </div>
           </div>
-          <el-button v-if="isTeacher" type="primary" class="create-btn" @click="createCourse">创建课程</el-button>
-          <el-button class="all-btn" @click="showAllCourses">全部</el-button>
+          <div class="card-list">
+            <el-card v-for="task in filteredTasks.slice(0, displayLimit)" :key="task.id" class="card">
+              <div class="card-row">
+                <div class="card-info">
+                  <span class="cardWord">{{ task.name }}</span>
+                  <span class="cardWord">{{ task.begin_time }} ~ {{ task.end_time }}</span>
+                  <span class="cardWord">{{ task.status }}</span>
+                </div>
+                <div class="card-actions">
+                  <el-button class="cardButton" @click="goToTask(task.id)">去完成</el-button>
+                </div>
+              </div>
+            </el-card>
+          </div>
         </div>
-        <div class="course-list">
-          <el-card v-for="course in courseData.slice(0, 4)" :key="course.id" class="course-card card-hover">
-            <div class="course-title">{{ course.name }}</div>
-            <div class="course-desc">{{ course.desc }}</div>
-          </el-card>
-        </div>
-      </div>
+      </el-tab-pane>
 
-      <!-- 任务区 -->
-      <div v-if="activeTab === 'task'" class="task-area">
-        <div class="area-header">
-          <div class="area-title">我的任务</div>
-          <el-button v-if="isTeacher" type="primary" class="create-btn" @click="createTask">创建任务</el-button>
-          <el-button class="all-btn" @click="showAllTasks">全部</el-button>
+      <!-- 题目模块 Tab -->
+      <el-tab-pane name="questions">
+        <template #label>
+          <span class="component-title">我的题目</span>
+        </template>
+        <div class="module-content">
+          <div class="module-header">
+            <h2 class="module-title">我的题目</h2>
+             <div class="module-actions">
+              <el-button v-if="isTeacher" class="create-button" @click="createQuestion">创建题目</el-button>
+              <el-button class="all-button" @click="goToQuestions">全部</el-button>
+            </div>
+          </div>
+          <div class="card-list">
+            <el-card v-for="question in filteredQuestions.slice(0, displayLimit)" :key="question.id" class="card">
+              <div class="card-row">
+                <div class="card-info">
+                  <span class="cardWord">{{ question.title }}</span>
+                  <span class="cardWord">{{ question.type }}</span>
+                  <span class="cardWord">{{ question.status }}</span>
+                </div>
+                <div class="card-actions">
+                  <el-button class="cardButton" @click="goToQuestion(question.id)">查看</el-button>
+                </div>
+              </div>
+            </el-card>
+          </div>
         </div>
-        <el-table :data="taskData" border stripe style="width: 100%">
-          <el-table-column prop="title" label="任务标题" />
-          <el-table-column prop="detail" label="任务详情" />
-        </el-table>
-      </div>
+      </el-tab-pane>
 
-      <!-- 题目区 -->
-      <div v-if="activeTab === 'question'" class="question-area">
-        <div class="area-header">
-          <div class="area-title">我的题目</div>
-          <el-button v-if="isTeacher" type="primary" class="create-btn" @click="createQuestion">创建题目</el-button>
-          <el-button class="all-btn" @click="showAllQuestions">全部</el-button>
+        <!-- 公告模块 Tab -->
+      <el-tab-pane name="notices">
+        <template #label>
+          <span class="component-title">最新公告</span>
+        </template>
+        <div class="module-content">
+           <div class="module-header">
+             <h2 class="module-title">最新公告</h2>
+             <div class="module-actions">
+               <el-button class="all-button" @click="goToNotices">全部</el-button>
+             </div>
+           </div>
+          <div class="card-list">
+            <el-card v-for="notice in notices.slice(0, displayLimit)" :key="notice.id" class="card">
+              <div class="card-row">
+                <div class="card-info">
+                  <span class="cardWord">{{ notice.title }}</span>
+                  <span class="cardWord">{{ notice.time }}</span>
+                </div>
+                <div class="card-actions">
+                  <el-button class="cardButton" @click="goToNotice(notice.id)">详情</el-button>
+                </div>
+              </div>
+            </el-card>
+          </div>
         </div>
-        <el-table :data="questionData" border stripe style="width: 100%">
-          <el-table-column prop="title" label="题目标题" />
-          <el-table-column prop="detail" label="题目详情" />
-        </el-table>
-      </div>
-    </div>
+      </el-tab-pane>
+    </el-tabs>
+    <div style="height: 40px;"></div> <!-- 底部留白 -->
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import NavBar from '../components/NavBar.vue';
-import Clock from '../components/Clock.vue';
 import { useRouter } from 'vue-router';
-// 时间卡片组件
-const TimeCard = {
-  name: 'TimeCard',
-  setup() {
-    const now = ref(new Date());
-    let timer = null;
-    onMounted(() => {
-      timer = setInterval(() => {
-        now.value = new Date();
-      }, 1000);
-    });
-    return { now };
-  },
-  template: `<div class='time-card'><div class='time-title'>当前时间</div><div class='time-value'>{{ now.toLocaleString() }}</div></div>`
-};
+import { ElMessage } from 'element-plus';
 
-// tabs配置
-const tabs = [
-  { name: 'todo', label: '待办' },
-  { name: 'course', label: '课程' },
-  { name: 'task', label: '任务' },
-  { name: 'question', label: '题目' },
-];
-const activeTab = ref('todo');
-const hoverTab = ref('');
+const router = useRouter();
 
-// 用户身份（0老师，1学生，2助教）
-const user = ref({ name: '张三', identity: 2 }); // 0老师 1学生 2助教
+const currentTab = ref('todo'); // 默认选中待办 Tab
+
+// 模拟用户身份 (0老师, 1学生, 2助教)
+const user = ref({ id: 1001, name: '张三', identity: 1 }); // 切换这里的identity来模拟不同身份
 const isTeacher = computed(() => user.value.identity === 0);
+const isStudent = computed(() => user.value.identity === 1);
 const isAssistant = computed(() => user.value.identity === 2);
 
-// 助教身份下课程区角色切换
-const courseRole = ref('student'); // student/assistant
+const displayLimit = 4; // 其他模块显示的卡片数量
+const pageSize = 6; // 待办事项每页显示数量
+const currentTodoPage = ref(1); // 待办事项当前页
 
-// 待办数据
-const todoData = ref([
-  { id: 1, title: '批改作业1', status: '未完成' },
-  { id: 2, title: '批改作业2', status: '未完成' },
-  { id: 3, title: '发布通知', status: '已完成' },
-  { id: 4, title: '课程答疑', status: '未完成' },
-  { id: 5, title: '整理资料', status: '未完成' },
-  { id: 6, title: '准备课件', status: '未完成' },
-]);
-const todoPage = ref(1);
-const todoPageSize = 4;
-
-// 课程数据
-const courseData = ref([
-  { id: 1, name: '软件工程', desc: '软件开发流程与实践' },
-  { id: 2, name: '数据结构', desc: '算法与数据结构基础' },
-  { id: 3, name: '操作系统', desc: '操作系统原理' },
-  { id: 4, name: '数据库', desc: '数据库设计与应用' },
+// 模拟待办数据
+const allTodoItems = ref([
+  { id: 1, title: '完成第三章作业', dueDate: '2024-03-27', type: 'task', status: 'pending' }, // 学生待完成任务
+  { id: 2, title: '批改实验一报告', dueDate: '2024-03-25', type: 'task', status: 'pending' }, // 老师/助教待批改任务
+  { id: 3, title: '完成期中复习任务', dueDate: '2024-04-15', type: 'task', status: 'pending' }, // 学生待完成任务
+  { id: 4, title: '批改第四章作业', dueDate: '2024-04-05', type: 'task', status: 'pending' }, // 老师/助教待批改任务
+  { id: 5, title: '阅读计算机网络第五章', dueDate: '2024-03-30', type: 'reading', status: 'pending' }, // 学生其他待办
+  { id: 6, title: '准备下周课程内容', dueDate: '2024-03-29', type: 'prep', status: 'pending' }, // 老师其他待办
+  { id: 7, title: '回答学生问题', dueDate: '2024-03-26', type: 'question', status: 'pending' }, // 老师/助教其他待办
 ]);
 
-// 任务数据
-const taskData = ref([
-  { id: 1, title: '作业1', detail: '完成第1章课后题' },
-  { id: 2, title: '作业2', detail: '完成第2章编程题' },
-  { id: 3, title: '实验报告', detail: '提交实验报告' },
+// 根据身份过滤待办事项
+const filteredTodoItems = computed(() => {
+  if (isStudent.value) {
+    // 学生：待完成任务 (这里简化为所有status为pending的type为task的待办)
+    return allTodoItems.value.filter(item => item.type === 'task' && item.status === 'pending');
+  } else if (isTeacher.value || isAssistant.value) {
+    // 老师/助教：待批改任务 (这里简化为所有status为pending的type为task的待办)
+     return allTodoItems.value.filter(item => item.type === 'task' && item.status === 'pending');
+  } else {
+    return [];
+  }
+});
+
+// 待办事项分页
+const pagedTodoItems = computed(() => {
+  const start = (currentTodoPage.value - 1) * pageSize;
+  const end = start + pageSize;
+  return filteredTodoItems.value.slice(start, end);
+});
+
+const handleTodoPageChange = (page) => {
+  currentTodoPage.value = page;
+};
+
+const goToTodoItem = (item) => {
+  // 根据待办类型跳转到对应页面
+  ElMessage({
+    message: `查看待办详情: ${item.title}`,
+    type: 'info',
+    duration: 2000
+  });
+  // 实际应用中，这里会根据item.type和item.id跳转到具体任务或问题页面
+};
+
+
+// 模拟课程数据 (老师/助教显示自己创建或负责的，学生显示自己选的)
+const allCourses = ref([
+  { id: 1, name: '计算机组成原理', teacher: '张老师', time: '周一 8:00-10:00', creator_id: 100, is_student: true, is_assistant: false },
+  { id: 2, name: '数据结构', teacher: '李老师', time: '周三 10:00-12:00', creator_id: 101, is_student: true, is_assistant: true }, // 模拟学生也是助教
+  { id: 3, name: '操作系统', teacher: '王老师', time: '周五 14:00-16:00', creator_id: 102, is_student: false, is_assistant: false }, // 模拟老师创建的课程
+  { id: 4, name: '计算机网络', teacher: '赵老师', time: '周二 9:00-11:00', creator_id: 103, is_student: true, is_assistant: false },
 ]);
 
-// 题目数据
-const questionData = ref([
-  { id: 1, title: '选择题1', detail: '关于软件生命周期的题目' },
-  { id: 2, title: '编程题1', detail: '实现链表反转' },
-  { id: 3, title: '简答题1', detail: '简述进程与线程的区别' },
+const courses = computed(() => {
+  if (isStudent.value) {
+    return allCourses.value.filter(course => course.is_student || course.is_assistant);
+  } else if (isTeacher.value) {
+    return allCourses.value.filter(course => course.creator_id === user.value.id);
+  } else if (isAssistant.value) {
+     // 助教显示自己负责的课程（这里简化为is_assistant为true的课程）
+     return allCourses.value.filter(course => course.is_assistant);
+  }
+   return [];
+});
+
+// 模拟任务数据 (老师/助教显示自己创建或负责的，学生显示私有任务)
+const allTasks = ref([
+  { id: 1, name: '第三章作业', begin_time: '2024-03-20', end_time: '2024-03-27', status: '未完成', is_private: true, creator_id: 201 }, // 私有任务
+  { id: 2, name: '实验一', begin_time: '2024-03-10', end_time: '2024-03-15', status: '已完成', is_private: false, creator_id: 202 }, // 公开任务
+  { id: 3, name: '期中复习任务', begin_time: '2024-04-01', end_time: '2024-04-15', status: '未完成', is_private: true, creator_id: 201 }, // 私有任务
 ]);
 
-// tab切换
-function handleTabClick(tab) {
-  activeTab.value = tab.paneName;
-}
+const filteredTasks = computed(() => {
+  if (isStudent.value) {
+    return allTasks.value.filter(task => task.is_private); // 学生只看私有任务
+  } else if (isTeacher.value || isAssistant.value) {
+     return allTasks.value.filter(task => task.creator_id === user.value.id); // 老师/助教看自己创建的
+  }
+   return [];
+});
 
-// 创建按钮事件
-function createCourse() {
-  alert('创建课程');
-}
-function createTask() {
-  alert('创建任务');
-}
-function createQuestion() {
-  alert('创建题目');
-}
-function showAllCourses() {
-  router.push('/courses');
-}
-function showAllTasks() {
-  alert('显示全部任务');
-}
-function showAllQuestions() {
-  alert('显示全部题目');
-}
+// 模拟题目数据 (老师/助教显示自己创建的，学生显示私有题目)
+const allQuestions = ref([
+  { id: 1, title: '二叉树遍历', type: '选择题', status: '未完成', is_private: true, creator_id: 301 }, // 私有题目
+  { id: 2, title: '动态规划', type: '简答题', status: '已完成', is_private: false, creator_id: 302 }, // 公开题目
+  { id: 3, title: '链表操作', type: '编程题', status: '未完成', is_private: true, creator_id: 301 }, // 私有题目
+]);
 
-// 点击待办行
-function onTodoRowClick(row) {
-  alert('点击了：' + row.title);
-}
+const filteredQuestions = computed(() => {
+   if (isStudent.value) {
+    return allQuestions.value.filter(question => question.is_private); // 学生只看私有题目
+  } else if (isTeacher.value || isAssistant.value) {
+     return allQuestions.value.filter(question => question.creator_id === user.value.id); // 老师/助教看自己创建的
+  }
+   return [];
+});
+
+// 模拟公告数据
+const notices = ref([
+  { id: 1, title: '清明节放假通知', time: '2024-04-01' },
+  { id: 2, title: '期中考试安排', time: '2024-04-10' },
+  { id: 3, title: '实验室开放通知', time: '2024-03-28' },
+]);
+
+// 路由跳转函数
+const goToCourses = () => { router.push('/courses'); };
+const goToCourse = (id) => { router.push(`/course/${id}`); };
+
+const goToTasks = () => { router.push('/tasks'); };
+const goToTask = (id) => { router.push(`/doTask/${id}`); }; // 跳转到做任务页面
+
+const goToQuestions = () => { router.push('/questions'); };
+const goToQuestion = (id) => { router.push(`/question/${id}`); }; // 跳转到题目详情页面
+
+const goToNotices = () => { /* router.push('/notices'); */ ElMessage('跳转到公告列表页'); }; // 假设有公告列表页
+const goToNotice = (id) => { /* router.push(`/notice/${id}`); */ ElMessage(`查看公告详情 ${id}`); }; // 假设有公告详情页
+
+// 创建功能跳转 (仅老师可见)
+const createCourse = () => { router.push('/createCourse'); }; // 假设有创建课程页面
+const createTask = () => { router.push('/createTask'); };   // 假设有创建任务页面
+const createQuestion = () => { router.push('/createQuestion'); }; // 假设有创建题目页面
+
+
 </script>
 
 <style scoped>
-.home-container {
+.background-layer {
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9)),
+              url('../assets/course_id_background.jpg');
   background-size: cover;
-  overflow: hidden;
-  background: #fff;
-  min-height: 100vh;
-  padding: 24px 40px;
+  margin-top: -80px;
+  margin-left: -8px;
+  background-position: center;
+  z-index: -1;
 }
-.tab-center-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.custom-tabs {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: auto;
-  min-width: unset;
-  max-width: unset;
-  padding: 0;
-}
-:deep(.el-tabs__header) {
-  display: flex;
-  justify-content: center;
-  width: auto;
-  margin: 0;
-}
-:deep(.el-tabs__nav) {
-  display: flex;
-  justify-content: center;
-  width: auto;
-  margin: 0;
-}
-:deep(.el-tabs__item) {
-  color: #333;
-  background: #f5f5f5;
-  border-radius: 24px 24px 0 0;
-  margin-right: 18px;
-  font-size: 22px;
-  font-weight: 500;
-  height: 56px;
-  line-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, color 0.2s, box-shadow 0.5s;
-  box-sizing: border-box;
-  padding: 0 0;
-  min-width: 160px;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-:deep(.el-tabs__item:last-child) {
-  margin-right: 0;
-}
-:deep(.el-tabs__item.is-active),
-:deep(.el-tabs__item):hover {
-  background: #222;
-  color: #fff;
-  box-shadow: 0 4px 16px #eaeaea;
-}
-:deep(.el-tabs__active-bar) {
-  display: none !important;
-}
-:deep(.el-pagination) {
-  --el-color-primary: #222;
-  --el-color-primary-light-3: #888;
-  --el-color-primary-light-5: #bbb;
-  --el-color-primary-light-7: #e0e0e0;
-}
-:deep(.el-pagination .el-pager li.is-active) {
-  background: #222;
-  color: #fff;
-}
-:deep(.el-pagination .el-pager li) {
-  color: #222;
-}
-.role-switch-group {
-  display: flex;
-  gap: 0;
-  border: 2px solid #3a8ee6;
-  border-radius: 18px;
-  overflow: hidden;
-  margin-right: 24px;
-  height: 48px;
-}
-.role-switch-group .el-button {
-  border: none;
-  border-radius: 0;
-  font-size: 22px;
-  height: 48px;
-  min-width: 140px;
-  background: #f5f5f5;
-  color: #333;
-  transition: background 0.2s, color 0.2s;
-  margin: 0 !important;
-  padding: 0 32px;
-  font-weight: 700;
-  box-shadow: none;
-}
-.role-switch-group .el-button.el-button--primary {
-  background: #409eff;
-  color: #fff;
-}
-.role-switch-group .el-button:not(.el-button--primary):hover {
-  background: #e0e0e0;
-  color: #222;
-}
-
-.work-area {
-  background: #fafafa;
-  border-radius: 16px;
-  padding: 32px 40px;
-  min-height: 500px;
-  box-shadow: 0 2px 8px #eee;
-}
-
-.todo-area-flex {
-  display: flex;
-  gap: 32px;
-  height: 280px;
-}
-.todo-table-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  min-width: 0;
-  min-height:500px;
-}
-.todo-time-area {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.time-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px #eaeaea;
-  padding: 40px 32px;
-  text-align: center;
-  width: 100%;
-  max-width: 320px;
-}
-.time-title {
-  font-size: 20px;
-  color: #222;
-  margin-bottom: 16px;
-  font-weight: 600;
-}
-.time-value {
-  font-size: 28px;
-  color: #333;
-  font-family: monospace;
-}
-
-.area-title {
-  font-size: 24px;
+.mainTitle {
+  color: rgb(206, 206, 206);
+  font-size: 3.5rem;
   font-weight: bold;
-  color: #222;
-  margin-bottom: 20px;
+  margin-left: 80px;
+  margin-top: 120px;
+  margin-bottom: 40px;
 }
-.area-header {
+
+/* 复制 classInfo 的 tabs-container 样式 */
+.tabs-container {
+  position: relative;
+  top: 200px; /* 根据顶部标题高度调整 */
+  max-height: calc(100vh - 250px); /* 根据顶部标题和底部留白调整 */
+  overflow-y: auto;
+  z-index: 1;
+  background-color: rgb(255, 255, 255, 0.05);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  padding: 0 80px;
+}
+
+.tabs-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari 和新版 Edge */
+}
+
+/* 复制 classInfo 的 main-tabs 样式并调整居中分布 */
+.main-tabs :deep(.el-tabs__header) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: transparent; /* 可自定义背景 */
+  display: flex; /* 启用 Flexbox */
+  justify-content: center; /* 水平居中 */
+  width: 100%; /* 宽度占满容器 */
+}
+
+.main-tabs :deep(.el-tabs__nav) {
+    width: 100%; /* 导航区域宽度占满 */
+    display: flex; /* 启用 Flexbox */
+    justify-content: space-around; /* 子项（Tab Items）均匀分布 */
+}
+
+.main-tabs :deep(.el-tabs__item) {
+   flex-basis: 0; /* Tab 项的基础宽度为0 */
+   flex-grow: 1; /* Tab 项平均分配剩余空间 */
+   text-align: center; /* Tab 项内部文字居中 */
+   padding: 0; /* 移除默认内边距 */
+   /* 其他样式保持原样或微调 */
+   color: #c5c5c5;
+   font-size: 1.5rem;
+   font-weight: bold;
+   height: 50px; /* 根据需要调整 */
+   line-height: 50px; /* 根据需要调整 */
+}
+
+
+/* 复制 classInfo 的 component-title 样式并调整居中 */
+.component-title {
+  color: inherit; /* 继承父元素的颜色 */
+  font-size: 1.5rem;
+  font-weight: bold;
+  /* margin已通过el-tabs__item的padding和justify-content调整 */
+}
+
+/* 模块内容容器，增加内边距 */
+.module-content {
+  padding: 20px;
+}
+
+.module-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
 }
-.create-btn {
-  margin-left: 16px;
+
+.module-title {
+  color: #ffd04b;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-left: 10px;
 }
-.all-btn {
-  background: #333;
-  color: #fff;
-  border: none;
-  margin-left: 16px;
+
+.module-actions .all-button, .module-actions .create-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(203, 203, 203, 0.8);
+    border: none;
+    padding: 8px 15px;
+    font-size: 1rem;
+    border-radius: 15px;
+    transition: background 0.2s, color 0.2s;
 }
-.course-list {
-  margin-top: 50px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 50px 20px;
-  width: 100%;
-  height: 360px;
-  align-items: stretch;
-  justify-items: stretch;
+
+.module-actions .all-button:hover, .module-actions .create-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: rgb(206, 206, 206);
 }
-.course-card {
-  width: 85%;
-  min-height: 120px;
-  height: 100%;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 16px;
-  box-shadow: 0 1px 8px #eee;
+
+.card-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.card {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  min-width: 300px; /* 调整最小宽度以适应布局 */
+  max-width: 400px; /* 调整最大宽度以适应布局 */
+  flex: 1 1 300px; /* 调整 flex basis */
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-info {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 16px;
-  transition: box-shadow 0.25s, transform 0.25s;
-  cursor: pointer;
+  gap: 8px;
+  margin: 10px 0 10px 10px;
 }
-.course-card.card-hover:hover {
-  box-shadow: 0 8px 32px #bbb;
-  transform: translateY(-6px) scale(1.04);
+.cardWord {
+  color: #c5c5c5;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
-.course-title {
-  font-size: 18px;
-  font-weight: 600;
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-right: 10px;
+}
+.cardButton {
+  background: #ffd04b;
   color: #222;
-  margin-bottom: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  padding: 8px 18px;
+  transition: background 0.2s, color 0.2s;
 }
-.course-desc {
-  color: #666;
-  font-size: 14px;
-}
-.pagination-box {
-
-  margin-left: 70%;
-  margin-top: 14px;
-}
-
-/**** 表格美化 ****/
-.custom-table {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px #eaeaea;
-  transition: box-shadow 0.2s;
-}
-:deep(.el-table__body tr.todo-row) {
-  cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s;
-}
-:deep(.el-table__body tr.todo-row:hover) {
-  background: #f0f2f5 !important;
-  box-shadow: 0 2px 12px #eaeaea;
-}
-:deep(.el-table__body tr.todo-row:active) {
-  background: #e0e0e0 !important;
-  box-shadow: 0 2px 16px #bdbdbd;
-}
-:deep(.el-table__row) {
-  border-radius: 12px;
-  transition: background 0.18s, box-shadow 0.18s;
-}
-:deep(.el-table__row:hover) {
-  background: #f0f2f5 !important;
-}
-:deep(.el-table__row:active) {
-  background: #e0e0e0 !important;
-}
-:deep(.el-table) {
-  border-radius: 16px;
-  overflow: hidden;
-}
-:deep(.el-table__cell) {
-  font-size: 17px;
-  padding: 14px 12px;
+.cardButton:hover {
+  background: #fff;
+  color: #222;
 }
 </style>

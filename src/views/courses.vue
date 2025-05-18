@@ -1,8 +1,11 @@
 <template>
   <NavBar active="2"/>
-  <div class="courses-container">
+  <div class="background-layer">
+    <h1 class="mainTitle">课程列表</h1>
+  </div>
+
+  <div class="content-container">
     <div class="courses-header">
-      <div class="title">课程列表</div>
       <div class="options">
         <el-radio-group v-model="viewMode" size="large">
           <el-radio-button label="my">我的</el-radio-button>
@@ -30,12 +33,14 @@
     </div>
     <div class="courses-content">
       <div class="course-list">
-        <el-card v-for="course in displayCourses" :key="course.id" class="course-card card-hover" @click="onCourseClick(course)">
-          <div class="course-title">{{ course.name }}</div>
-          <div class="course-teacher">授课教师：{{ course.teacher }}</div>
-          <div class="course-time">上课时间：{{ course.time }}</div>
-          <div class="course-location">上课地点：{{ course.location }}</div>
-          <div class="course-desc">{{ course.desc }}</div>
+        <el-card v-for="course in displayCourses" :key="course.id" class="card card-hover" @click="onCourseClick(course)">
+          <div class="card-info">
+            <span class="cardWord">{{ course.name }}</span>
+            <span class="cardWord">授课教师：{{ course.teacher }}</span>
+            <span class="cardWord">上课时间：{{ course.time }}</span>
+            <span class="cardWord">上课地点：{{ course.location }}</span>
+            <span class="cardWord">{{ course.desc }}</span>
+          </div>
         </el-card>
       </div>
 
@@ -56,6 +61,9 @@
 import { ref, computed } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { Search } from '@element-plus/icons-vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 // 用户身份（0老师，1学生，2助教）
 const user = ref({ name: '张三', identity: 1 }); // 0老师 1学生 2助教
@@ -95,23 +103,30 @@ const filteredCourses = computed(() => {
   if (viewMode.value === 'my') {
     // 我的课程：老师显示创建的，学生显示加入的，助教根据角色切换
     if (isTeacher.value) {
-      result = result.filter(course => course.teacher === '张老师'); // 假设张老师是当前用户
+      // 假设张老师是当前用户 (id: 0)
+      result = result.filter(course => course.teacher === '王老师'); // 老师创建的示例
     } else if (isAssistant.value && courseRole.value === 'assistant') {
-      result = result.filter(course => course.teacher === '张老师'); // 假设张老师是当前用户
-    } else {
-      result = result.filter(course => course.teacher !== '张老师'); // 假设张老师是当前用户
+      // 假设张老师是当前用户 (id: 0)
+      result = result.filter(course => course.teacher === '李老师'); // 助教负责的示例
+    } else { // 学生 或 助教作为学生
+      // 假设学生加入了 id 为 1, 2, 4 的课程
+      result = result.filter(course => [1, 2, 4].includes(course.id));
     }
   }
   if (searchClass.value) {
     // 这里可以对接后端接口，目前仅做前端过滤
-    result = result.filter(course => course.name.includes(searchClass.value));
+    result = result.filter(course =>
+      Object.values(course).some(value =>
+        String(value).toLowerCase().includes(searchClass.value.toLowerCase())
+      )
+    );
   }
   return result;
 });
 
 // 分页
 const currentPage = ref(1);
-const pageSize = 10;
+const pageSize = 8; // 调整每页显示数量以铺满
 const displayCourses = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
   return filteredCourses.value.slice(start, start + pageSize);
@@ -119,46 +134,68 @@ const displayCourses = computed(() => {
 
 // 点击课程卡片
 const onCourseClick = (course) => {
-  alert('点击了课程：' + course.name);
+   router.push(`/course/${course.id}`);
 };
 </script>
 
 <style scoped>
-.courses-container {
-  background: linear-gradient(135deg, #f2f2f2 60%, #e0e0e0 100%);
-  min-height: 100vh;
-  padding: 24px 40px;
-  overflow: hidden;
+.background-layer {
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9)),
+              url('../assets/course_id_background.jpg'); /* 复用背景图 */
+  background-size: cover;
+  margin-top: -80px; /* 向上偏移以覆盖顶部 */
+  margin-left: -8px; /* 向左偏移以覆盖左侧 */
+  background-position: center;
+  z-index: -1;
 }
+
+.mainTitle {
+  color: rgb(206, 206, 206);
+  font-size: 3.5rem;
+  font-weight: bold;
+  margin-left: 80px;
+  margin-top: 120px;
+  margin-bottom: 40px;
+}
+
+.content-container {
+  position: relative;
+  top: 200px; /* 根据顶部标题和背景偏移调整 */
+  padding: 20px 80px;
+  background-color: rgba(255, 255, 255, 0.05); /* 半透明背景 */
+  min-height: calc(100vh - 250px); /* 确保内容区域有最小高度 */
+  z-index: 1;
+  overflow-y: auto; /* 允许滚动 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.content-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari 和新版 Edge */
+}
+
+
 .courses-header {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-.title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #222;
-  letter-spacing: 2px;
-  display: flex;
+  justify-content: space-between; /* 选项和搜索框在同一行 */
   align-items: center;
-  gap: 10px;
+  margin-bottom: 32px;
+  padding: 0 10px; /* 与卡片列表内边距对齐 */
 }
-.title::before {
-  content: '\1F393'; /* 🎓 */
-  font-size: 32px;
-  margin-right: 6px;
-}
+
 .options {
   display: flex;
   align-items: center;
   gap: 24px;
 }
+
 .role-switch-group {
   display: flex;
   gap: 0;
-  border: 2px solid #888;
+  border: 2px solid #888; /* 边框颜色调整 */
   border-radius: 18px;
   overflow: hidden;
   height: 48px;
@@ -169,8 +206,8 @@ const onCourseClick = (course) => {
   font-size: 22px;
   height: 48px;
   min-width: 140px;
-  background: #f5f5f5;
-  color: #222;
+  background: #f5f5f5; /* 背景色调整 */
+  color: #222; /* 文字颜色调整 */
   transition: background 0.2s, color 0.2s;
   margin: 0 !important;
   padding: 0 32px;
@@ -178,13 +215,14 @@ const onCourseClick = (course) => {
   box-shadow: none;
 }
 .role-switch-group .el-button.el-button--primary {
-  background: #222;
-  color: #fff;
+  background: #222; /* 选中背景色 */
+  color: #fff; /* 选中文字颜色 */
 }
 .role-switch-group .el-button:not(.el-button--primary):hover {
-  background: #e0e0e0;
-  color: #222;
+  background: #e0e0e0; /* 悬停背景色 */
+  color: #222; /* 悬停文字颜色 */
 }
+
 .search-box {
   display: flex;
   gap: 16px;
@@ -193,94 +231,59 @@ const onCourseClick = (course) => {
 .search-input {
   width: 300px;
 }
+
 .courses-content {
-  background: #fff;
+  /* background: #fff; /* 不需要白色背景 */
   border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 2px 8px #e0e0e0;
+  padding: 0; /* 调整内边距，让卡片列表自己控制 */
+  /* box-shadow: 0 2px 8px #e0e0e0; /* 调整阴影 */
 }
+
 .course-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 两列布局 */
-  grid-template-rows: auto; /* 自动行高 */
-  gap: 40px 20px; /* 行间距和列间距 */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* 自适应列宽 */
+  gap: 24px; /* 行间距和列间距 */
   width: 100%;
-  padding: 20px; /* 与工作区保持一致的间隔 */
-  align-items: stretch;
-  justify-items: stretch;
+  padding: 0 10px; /* 调整内边距 */
+  box-sizing: border-box; /* 将内边距计算在宽度内 */
 }
-.course-card {
-  width: 85%;
-  min-height: 100px; /* 缩小卡片高度 */
-  height: auto;
-  background: linear-gradient(120deg, #f7f7f7 70%, #e3e3e3 100%);
-  border: 1.5px solid #bbb;
-  border-radius: 16px; /* 调整圆角大小 */
-  box-shadow: 0 2px 12px #e0e0e0; /* 调整阴影 */
+
+.card {
+  background-color: rgba(255, 255, 255, 0.1); /* 卡片背景半透明 */
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* 阴影调整 */
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 内容纵向排列 */
   justify-content: center;
   align-items: flex-start;
-  padding: 16px 16px 16px 16px; /* 缩小内边距 */
-  transition: box-shadow 0.25s, transform 0.25s, background 0.25s;
+  padding: 16px; /* 内边距 */
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
 }
-.course-card.card-hover:hover {
-  box-shadow: 0 8px 32px #bbb;
-  transform: translateY(-6px) scale(1.04);
-  background: linear-gradient(120deg, #e0e0e0 60%, #cfcfcf 100%);
+.card-hover:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18); /* 悬停阴影调整 */
 }
-.course-card .icon {
-  position: absolute;
-  top: 18px;
-  right: 24px;
-  font-size: 32px;
-  color: #888;
-  opacity: 0.18;
-  pointer-events: none;
-}
-.course-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #222;
-  margin-bottom: 8px;
+
+.card-info {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 8px; /* 行间距 */
+  width: 100%; /* 宽度占满 */
 }
-.course-title::before {
-  content: '\1F4D6'; /* 📖 */
-  font-size: 22px;
-  margin-right: 4px;
+
+.cardWord {
+  color: #c5c5c5; /* 文字颜色调整 */
+  font-size: 1.2rem;
+  font-weight: bold;
 }
-.course-teacher::before {
-  content: '\1F464'; /* 👤 */
-  margin-right: 4px;
-}
-.course-time::before {
-  content: '\23F0'; /* ⏰ */
-  margin-right: 4px;
-}
-.course-location::before {
-  content: '\1F3EB'; /* 🏫 */
-  margin-right: 4px;
-}
-.course-teacher, .course-time, .course-location {
-  font-size: 15px;
-  color: #444;
-  margin-bottom: 4px;
-}
-.course-desc {
-  font-size: 15px;
-  color: #666;
-  margin-top: 8px;
-}
+
+
 .pagination-box {
-  margin-top: 60px;
-  text-align: right;
+  margin-top: 40px; /* 调整间距 */
+  text-align: center; /* 居中 */
 }
+
 /**** 覆盖element主题色为黑白灰 ****/
 :deep(.el-radio-button__inner) {
   background: #f5f5f5; /* 按钮背景色 */
@@ -302,39 +305,67 @@ const onCourseClick = (course) => {
   border-color: #888; /* 悬停时的边框颜色 */
 }
 :deep(.el-input__wrapper) {
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.1); /* 输入框背景半透明 */
   border-radius: 8px;
-  border: 1.5px solid #bbb;
-  color: #222;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* 边框颜色调整 */
+  color: #c5c5c5; /* 文字颜色 */
+  box-shadow: none;
 }
 :deep(.el-input__inner) {
-  color: #222;
+  color: #c5c5c5; /* 文字颜色 */
   background: transparent;
 }
 :deep(.el-input__prefix) {
-  color: #888;
+  color: #c5c5c5; /* 图标颜色 */
 }
+:deep(.el-input__wrapper.is-focus) {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+}
+
 :deep(.el-button--primary) {
-  background: #222;
-  border-color: #222;
-  color: #fff;
+  background: #ffd04b; /* 按钮背景色 */
+  border-color: #ffd04b; /* 按钮边框颜色 */
+  color: #222; /* 按钮文字颜色 */
+  font-weight: bold;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 :deep(.el-button--primary:hover) {
-  background: #444;
-  border-color: #444;
-  color: #fff;
+  background: #fff; /* 悬停背景色 */
+  border-color: #fff; /* 悬停边框颜色 */
+  color: #222; /* 悬停文字颜色 */
 }
+
 :deep(.el-pagination) {
-  --el-color-primary: #222;
-  --el-color-primary-light-3: #888;
-  --el-color-primary-light-5: #bbb;
-  --el-color-primary-light-7: #e0e0e0;
-}
-:deep(.el-pagination .el-pager li.is-active) {
-  background: #222;
-  color: #fff;
+  --el-color-primary: #ffd04b; /* 主题色 */
+  --el-color-primary-light-3: #ffecb3; /* 浅色主题色 */
+  --el-color-primary-light-5: #fff3e0;
+  --el-color-primary-light-7: #fff8f0;
+  color: #c5c5c5; /* 文字颜色 */
 }
 :deep(.el-pagination .el-pager li) {
-  color: #222;
+  background-color: rgba(255, 255, 255, 0.1); /* 页码背景 */
+  color: #c5c5c5; /* 页码文字颜色 */
+  border-radius: 4px;
+  margin: 0 4px;
+  min-width: 30px;
 }
+:deep(.el-pagination .el-pager li:hover) {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+:deep(.el-pagination .el-pager li.is-active) {
+  background: #ffd04b; /* 激活页码背景 */
+  color: #222; /* 激活页码文字颜色 */
+  font-weight: bold;
+}
+:deep(.el-pagination .btn-prev, .el-pagination .btn-next) {
+   background-color: rgba(255, 255, 255, 0.1); /* 前后按钮背景 */
+   color: #c5c5c5; /* 前后按钮颜色 */
+   border-radius: 4px;
+}
+:deep(.el-pagination .btn-prev:hover, .el-pagination .btn-next:hover) {
+   background-color: rgba(255, 255, 255, 0.2);
+   color: #fff;
+}
+
 </style> 
