@@ -64,6 +64,21 @@ const routes = [
         path:'/checkTask/:id',
         name:'CheckTask',
         component: () => import('../views/checkTask.vue')
+    },
+    {
+        path:'/createCourse',
+        name:'CreateCourse',
+        component: () => import('../views/createCourse.vue')
+    },
+    {
+        path:'/createQuestion',
+        name:'CreateQuestion',
+        component: () => import('../views/createQuestion.vue')
+    },
+    {
+        path:'/createTask',
+        name:'CreateTask',
+        component: () => import('../views/createTask.vue')
     }
 ]
 
