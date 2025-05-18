@@ -59,6 +59,11 @@ const routes = [
         path:'/doTask/:id',
         name:'DoTask',
         component: () => import('../views/doTask.vue')
+    },
+    {
+        path:'/checkTask/:id',
+        name:'CheckTask',
+        component: () => import('../views/checkTask.vue')
     }
 ]
 
