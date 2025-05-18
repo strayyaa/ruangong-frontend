@@ -69,6 +69,15 @@
             <span style="margin-left:10px; color:#c5c5c5;">/ {{ taskInfo.scores[index] }}分</span>
           </div>
         </template>
+        <div class="comment-section">
+          <el-input
+            v-model="comments[index]"
+            type="textarea"
+            :rows="2"
+            placeholder="评语（可选）"
+            class="comment-input"
+          />
+        </div>
       </div>
     </div>
     <div class="submit-section">
