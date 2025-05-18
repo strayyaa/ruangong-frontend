@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import login from "../views/login.vue";
 import test from "../views/test.vue";
 import homepage from '../views/homepage.vue';
 import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
@@ -12,8 +11,8 @@ const routes = [
     },
     {
         path:'/login',
-        name:'loginPage',
-        component:login,
+        name:'Login',
+        component: () => import('../views/login.vue')
     },
     {
         path:'/test43906',
@@ -65,16 +64,6 @@ const routes = [
         name:'CheckTask',
         component: () => import('../views/checkTask.vue')
     },
-    {
-        path: '/login',
-        name: 'Login',
-        component: () => import('../views/login.vue')
-    },
-    {
-        path: '/register',
-        name: 'Register',
-        component: () => import('../views/register.vue')
-    }
 ]
 
 const router = createRouter({
@@ -82,14 +71,10 @@ const router = createRouter({
     history:createWebHistory(),
 });
 
-
-// 逻辑：
-// 若localStorage没有找到userId的信息，即还处于没有登录的状态，那么直接访问其他页面会跳转到主页面。
-
-
+// 路由守卫
 // router.beforeEach((to,from,next) => {
 //     const userId = localStorage.getItem('userId');
-//     if(!userId && to.path !== '/login'&& to.path !== '/'&& to.path !== '/test43906'){
+//     if(!userId && to.path !== '/login' && to.path !== '/' && to.path !== '/test43906'){
 //         next({path:'/'})
 //     }else{
 //         next();
