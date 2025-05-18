@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import login from "../views/login.vue";
 import test from "../views/test.vue";
 import homepage from '../views/homepage.vue';
 import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
@@ -9,11 +8,6 @@ const routes = [
         path:'/',
         name:'homepage',
         component:homepage,
-    },
-    {
-        path:'/login',
-        name:'loginPage',
-        component:login,
     },
     {
         path:'/test43906',
@@ -64,16 +58,6 @@ const routes = [
         path:'/checkTask/:id',
         name:'CheckTask',
         component: () => import('../views/checkTask.vue')
-    },
-    {
-        path: '/login',
-        name: 'Login',
-        component: () => import('../views/login.vue')
-    },
-    {
-        path: '/register',
-        name: 'Register',
-        component: () => import('../views/register.vue')
     }
 ]
 
