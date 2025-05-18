@@ -414,7 +414,7 @@ import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const courseId = ref(0);
-const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
+const status = ref(1); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
 const belongingClass = ref(0); // 学生在该课程的班级
 
 const distance = ref('140px');

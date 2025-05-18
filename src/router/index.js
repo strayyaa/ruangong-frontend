@@ -49,6 +49,16 @@ const routes = [
         path:'/class/:id',
         name:'classInfo',
         component: () => import('../views/classInfo.vue')
+    },
+    {
+        path:'/question/:id',
+        name:'QuestionInfo',
+        component: () => import('../views/questionInfo.vue')
+    },
+    {
+        path:'/doTask/:id',
+        name:'DoTask',
+        component: () => import('../views/doTask.vue')
     }
 ]
 
