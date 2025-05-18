@@ -11,8 +11,8 @@ const routes = [
     },
     {
         path:'/login',
-        name:'Login',
-        component: () => import('../views/login.vue')
+        name:'login',
+        component:() => import('../views/login.vue'),
     },
     {
         path:'/test43906',
@@ -63,7 +63,7 @@ const routes = [
         path:'/checkTask/:id',
         name:'CheckTask',
         component: () => import('../views/checkTask.vue')
-    },
+    }
 ]
 
 const router = createRouter({
