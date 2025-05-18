@@ -111,7 +111,7 @@ const filteredCourses = computed(() => {
 
 // 分页
 const currentPage = ref(1);
-const pageSize = 4;
+const pageSize = 10;
 const displayCourses = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
   return filteredCourses.value.slice(start, start + pageSize);
@@ -201,7 +201,7 @@ const onCourseClick = (course) => {
 }
 .course-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 两列布局 */
+  grid-template-columns: repeat(4, 1fr); /* 两列布局 */
   grid-template-rows: auto; /* 自动行高 */
   gap: 40px 20px; /* 行间距和列间距 */
   width: 100%;
