@@ -1,5 +1,5 @@
 <template>
-  <NavBar />
+  <NavBar active="3"/>
   <div class="tasks-container">
     <div class="tasks-header">
       <div class="title">任务列表</div>

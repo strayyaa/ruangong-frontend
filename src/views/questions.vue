@@ -1,5 +1,5 @@
 <template>
-  <NavBar />
+  <NavBar active="4"/>
   <div class="questions-container">
     <div class="questions-header">
       <div class="title">题目列表</div>
@@ -88,7 +88,7 @@ const onQuestionClick = (question) => {
 <style scoped>
 .questions-container {
   background: linear-gradient(135deg, #f2f2f2 60%, #e0e0e0 100%);
-  min-height: 100vh;
+  min-height: calc(100vh - 60px); /* 👈 减去Navbar的高度 */
   padding: 24px 40px;
   overflow: hidden;
 }
