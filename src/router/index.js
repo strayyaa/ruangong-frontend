@@ -10,6 +10,11 @@ const routes = [
         component:homepage,
     },
     {
+        path:'/profile',
+        name:'profile',
+        component:() => import('../views/profile.vue'),
+    },
+    {
         path:'/login',
         name:'login',
         component:() => import('../views/login.vue'),

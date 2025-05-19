@@ -112,7 +112,8 @@ onMounted(() => {
   margin-top: 200px;
 }
 .login-form {
-  margin-top: 20px;
+  margin-top: 10px;
+  /* margin-bottom: 0px; */
 }
 .submit-btn {
   width: 100%;

@@ -164,7 +164,7 @@ onMounted(() => {
   margin-top: 200px;
 }
 .register-form {
-  margin-top: 20px;
+  margin-top: -10px;
 }
 .submit-btn {
   width: 100%;
