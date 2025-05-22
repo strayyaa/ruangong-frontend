@@ -9,7 +9,6 @@ export const getTest = async () => {
     return res.data;
 }
 
-
 export const getUserInfoById = async (userId) => {
     try {
         const res = await instance.get(`/user/info?user_id=${userId}`)
@@ -96,5 +95,18 @@ export const login = async (account, password) => {
     } catch (error) {
         console.error('登录错误:', error.response || error)
         throw new Error(error.response?.data?.message || '登录失败，请稍后重试')
+    }
+}
+
+export const getUserCourses = async (userId) => {
+    try {
+        const res = await instance.get(`/course/user?user_id=${userId}`)
+        if (res.status !== 200) {
+            throw new Error('获取课程信息失败')
+        }
+        return res.data.data
+    } catch (error) {
+        console.error('获取课程信息错误:', error.response || error)
+        throw new Error(error.response?.data?.message || '获取课程信息失败，请稍后重试')
     }
 }
