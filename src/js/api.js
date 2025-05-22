@@ -9,6 +9,7 @@ export const getTest = async () => {
     return res.data;
 }
 
+
 export const getUserInfoById = async (userId) => {
     try {
         const res = await instance.get(`/user/info?user_id=${userId}`)
