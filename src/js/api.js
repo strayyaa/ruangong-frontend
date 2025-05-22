@@ -10,14 +10,18 @@ export const getTest = async () => {
 }
 
 export const getUserInfoById = async (userId) => {
-    const res = await instance.post('/api/user/info',{
-        userId: userId
-    })
-    if (res.status !== 200) {
-        throw new Error('请求失败');
+    try {
+        const res = await instance.get(`/user/info?user_id=${userId}`)
+        if (res.status !== 200) {
+            throw new Error('获取用户信息失败')
+        }
+        return res.data.data
+    } catch (error) {
+        console.error('获取用户信息错误:', error.response || error)
+        throw new Error(error.response?.data?.message || '获取用户信息失败，请稍后重试')
     }
-    return res.data;
 }
+
 export const getCourseInfoById = async (courseId) => {
     const res = await instance.post('/api/course/info',{
         courseId: courseId
@@ -27,6 +31,7 @@ export const getCourseInfoById = async (courseId) => {
     }
     return res.data;
 }
+
 export const createClass = async (courseId, className) => {
     const res = await instance.post('/api/class/create',{
         courseId: courseId,
@@ -37,6 +42,7 @@ export const createClass = async (courseId, className) => {
     }
     return res.data;
 }
+
 export const getClassInfoById = async (classId) => {
     const res = await instance.post('/api/class/info',{
         classId: classId
@@ -81,7 +87,6 @@ export const login = async (account, password) => {
             const token = res.data.data.token
             localStorage.setItem('token', token)
             // 设置后续请求的token
-            instance.defaults.headers.common['Authorization'] = `Bearer ${token}`
             // 保存用户信息
             localStorage.setItem('userId', res.data.data.user.user_id)
             localStorage.setItem('userIdentity', res.data.data.user.identity)
