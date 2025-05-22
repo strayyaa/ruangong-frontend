@@ -62,3 +62,30 @@ export const sendVerificationCode = async (email) => {
         throw new Error(error.response?.data?.message || '验证码发送失败，请稍后重试')
     }
 }
+
+export const login = async (account, password) => {
+    try {
+        const res = await instance.post('/user/login', {
+            account: account,
+            password: password
+        })
+        console.log(res)
+        if (res.status != '200') {
+            throw new Error('登录失败')
+        }
+        // 保存token到localStorage
+        if (res.data.data && res.data.data.token) {
+            const token = res.data.data.token
+            localStorage.setItem('token', token)
+            // 设置后续请求的token
+            instance.defaults.headers.common['Authorization'] = `Bearer ${token}`
+            // 保存用户信息
+            localStorage.setItem('userId', res.data.data.user.user_id)
+            localStorage.setItem('userIdentity', res.data.data.user.identity)
+        }
+        return res.data
+    } catch (error) {
+        console.error('登录错误:', error.response || error)
+        throw new Error(error.response?.data?.message || '登录失败，请稍后重试')
+    }
+}
