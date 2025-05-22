@@ -43,7 +43,9 @@
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" plain style="width: 100%">发送验证码</el-button>
+          <el-button type="primary" plain style="width: 100%" @click="handleSendVerificationCode" :disabled="countdown > 0">
+            {{ countdown > 0 ? `${countdown}秒后重试` : '发送验证码' }}
+          </el-button>
         </el-form-item>
         <el-form-item prop="code">
           <el-input v-model="registerForm.code" placeholder="验证码">
@@ -75,8 +77,10 @@ import { User, Lock, Message } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { animate } from 'animejs'
+import { sendVerificationCode as sendVerificationCodeApi } from '../js/api'
 
 const router = useRouter()
+const countdown = ref(0)
 const registerForm = reactive({
   studentId: '',
   password: '',
@@ -113,6 +117,27 @@ const handleRegister = async () => {
 }
 const goLogin = () => {
   router.push('/login')
+}
+const handleSendVerificationCode = async () => {
+  if (!registerForm.email) {
+    ElMessage.warning('请先输入邮箱地址')
+    return
+  }
+  
+  try {
+    await sendVerificationCodeApi(registerForm.email)
+    ElMessage.success('验证码已发送到您的邮箱')
+    countdown.value = 60
+    const timer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(timer)
+      }
+    }, 1000)
+  } catch (error) {
+    ElMessage.error(error.message || '验证码发送失败，请稍后重试')
+    console.error('发送验证码失败:', error)
+  }
 }
 onMounted(() => {
   animate('.toanimate', {

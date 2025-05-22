@@ -46,3 +46,22 @@ export const getClassInfoById = async (classId) => {
     }
     return res.data;
 }
+
+export const sendVerificationCode = async (email) => {
+    try {
+        console.log('正在发送验证码到邮箱:', email)
+        const res = await instance.get('/user/verify', {
+            params: {
+                mail: email
+            }
+        })
+        console.log('验证码发送响应:', res)
+        if (res.status !== 200) {
+            throw new Error('验证码发送失败')
+        }
+        return res.data
+    } catch (error) {
+        console.error('验证码发送错误:', error.response || error)
+        throw new Error(error.response?.data?.message || '验证码发送失败，请稍后重试')
+    }
+}
