@@ -2,7 +2,7 @@
 
 <template>
     <NavBar></NavBar>
-    {{ message["name"] }}
+    {{ message }}
     <div @click="testfun">asdsadsa</div>
 
     <h1>
@@ -13,6 +13,7 @@
     </h1>
 
     <el-button 
+    @click="testfun"
     @mouseenter="mouseenter"
     @mouseleave="mouseleave"
     class = "loginbtn"
@@ -23,11 +24,12 @@
   
 <script setup>
 import { onMounted, ref } from 'vue'
-import {getTest} from '../js/api.js'
+import {getCourseInfoById, getTest} from '../js/api.js'
 import NavBar from '../components/NavBar.vue';
+
 const message = ref({"name":"123"});
 const testfun = async () =>{
-  message.value = await getTest();
+  message.value = await getCourseInfoById();
 }
 const mouseenter = () => {
   animate('.loginbtn', {

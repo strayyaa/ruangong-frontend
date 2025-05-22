@@ -51,19 +51,32 @@
               <el-button class="all-button" @click="goToCourses">全部</el-button>
             </div>
           </div>
-          <div class="card-list">
-            <el-card v-for="course in courses.slice(0, displayLimit)" :key="course.id" class="card">
+          <!-- 助教身份选择 -->
+          <div v-if="isAssistant" class="role-selector">
+            <el-radio-group v-model="assistantRole" @change="handleRoleChange">
+              <el-radio-button label="student">作为学生</el-radio-button>
+              <el-radio-button label="assistant">作为助教</el-radio-button>
+            </el-radio-group>
+          </div>
+          <!-- 课程列表 -->
+          <div v-if="displayCourses.length > 0" class="card-list">
+            <el-card v-for="course in displayCourses.slice(0, displayLimit)" :key="course.id" class="card">
               <div class="card-row">
                 <div class="card-info">
                   <span class="cardWord">{{ course.name }}</span>
-                  <span class="cardWord">{{ course.teacher }}</span>
-                  <span class="cardWord">{{ course.time }}</span>
+                  <span class="cardWord">考核方式：{{ course.assMethod }}</span>
+                  <span class="cardWord">学分：{{ course.score }}</span>
+                  <span class="cardWord">学时：{{ course.time }}</span>
                 </div>
                 <div class="card-actions">
                   <el-button class="cardButton" @click="goToCourse(course.id)">进入课程</el-button>
                 </div>
               </div>
             </el-card>
+          </div>
+          <!-- 无课程提示 -->
+          <div v-else class="no-data">
+            <el-empty description="暂无课程" />
           </div>
         </div>
       </el-tab-pane>
@@ -128,50 +141,32 @@
         </div>
       </el-tab-pane>
 
-        <!-- 公告模块 Tab -->
-      <el-tab-pane name="notices">
-        <template #label>
-          <span class="component-title">最新公告</span>
-        </template>
-        <div class="module-content">
-           <div class="module-header">
-             <h2 class="module-title">最新公告</h2>
-             <div class="module-actions">
-               <el-button class="all-button" @click="goToNotices">全部</el-button>
-             </div>
-           </div>
-          <div class="card-list">
-            <el-card v-for="notice in notices.slice(0, displayLimit)" :key="notice.id" class="card">
-              <div class="card-row">
-                <div class="card-info">
-                  <span class="cardWord">{{ notice.title }}</span>
-                  <span class="cardWord">{{ notice.time }}</span>
-                </div>
-                <div class="card-actions">
-                  <el-button class="cardButton" @click="goToNotice(notice.id)">详情</el-button>
-                </div>
-              </div>
-            </el-card>
-          </div>
-        </div>
-      </el-tab-pane>
     </el-tabs>
     <div style="height: 40px;"></div> <!-- 底部留白 -->
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { getUserCourses,getUserInfoById } from '../js/api';
 
 const router = useRouter();
 
 const currentTab = ref('todo'); // 默认选中待办 Tab
 
 // 模拟用户身份 (0老师, 1学生, 2助教)
-const user = ref({ id: 1001, name: '张三', identity: 1 }); // 切换这里的identity来模拟不同身份
+const user = ref({ id: 61, name: '张三', identity: 2 }); // 切换这里的identity来模拟不同身份
+
+/*const userId = localStorage.getItem('userId');
+const user = ref();
+const getUserInfo = async () => {
+  const res = await getUserInfoById(userId);
+  user.value = res;
+}*/
+
 const isTeacher = computed(() => user.value.identity === 0);
 const isStudent = computed(() => user.value.identity === 1);
 const isAssistant = computed(() => user.value.identity === 2);
@@ -225,25 +220,56 @@ const goToTodoItem = (item) => {
   // 实际应用中，这里会根据item.type和item.id跳转到具体任务或问题页面
 };
 
+// 课程数据
+const studentCourses = ref([]);
+const assistantCourses = ref([]);
+const teacherCourses = ref([]);
+const assistantRole = ref('student'); // 助教身份选择
 
-// 模拟课程数据 (老师/助教显示自己创建或负责的，学生显示自己选的)
-const allCourses = ref([
-  { id: 1, name: '计算机组成原理', teacher: '张老师', time: '周一 8:00-10:00', creator_id: 100, is_student: true, is_assistant: false },
-  { id: 2, name: '数据结构', teacher: '李老师', time: '周三 10:00-12:00', creator_id: 101, is_student: true, is_assistant: true }, // 模拟学生也是助教
-  { id: 3, name: '操作系统', teacher: '王老师', time: '周五 14:00-16:00', creator_id: 102, is_student: false, is_assistant: false }, // 模拟老师创建的课程
-  { id: 4, name: '计算机网络', teacher: '赵老师', time: '周二 9:00-11:00', creator_id: 103, is_student: true, is_assistant: false },
-]);
-
-const courses = computed(() => {
-  if (isStudent.value) {
-    return allCourses.value.filter(course => course.is_student || course.is_assistant);
-  } else if (isTeacher.value) {
-    return allCourses.value.filter(course => course.creator_id === user.value.id);
+// 根据当前身份和选择显示课程
+const displayCourses = computed(() => {
+  if (isTeacher.value) {
+    return teacherCourses.value;
   } else if (isAssistant.value) {
-     // 助教显示自己负责的课程（这里简化为is_assistant为true的课程）
-     return allCourses.value.filter(course => course.is_assistant);
+    return assistantRole.value === 'student' ? studentCourses.value : assistantCourses.value;
+  } else {
+    return studentCourses.value;
   }
-   return [];
+});
+
+// 获取课程数据
+const fetchCourses = async () => {
+  try {
+    const response = await getUserCourses(user.value.id);
+    if (isStudent.value || isAssistant.value) {
+      // 学生或助教身份
+      if (isAssistant.value) {
+        // 助教身份，返回两个列表
+        studentCourses.value = response[0] || [];
+        assistantCourses.value = response[1] || [];
+      } else {
+        // 纯学生身份
+        studentCourses.value = response || [];
+      }
+    } else if (isTeacher.value) {
+      // 教师身份
+      teacherCourses.value = response || [];
+    }
+  } catch (error) {
+    ElMessage.error('获取课程列表失败');
+    console.error('获取课程列表失败:', error);
+  }
+};
+
+// 处理助教身份切换
+const handleRoleChange = (value) => {
+  assistantRole.value = value;
+};
+
+// 在组件挂载时获取课程数据
+onMounted(() => {
+  //getUserInfo();
+  fetchCourses();
 });
 
 // 模拟任务数据 (老师/助教显示自己创建或负责的，学生显示私有任务)
@@ -302,7 +328,6 @@ const goToNotice = (id) => { /* router.push(`/notice/${id}`); */ ElMessage(`查�
 const createCourse = () => { router.push('/createCourse'); }; // 假设有创建课程页面
 const createTask = () => { router.push('/createTask'); };   // 假设有创建任务页面
 const createQuestion = () => { router.push('/createQuestion'); }; // 假设有创建题目页面
-
 
 </script>
 
@@ -471,5 +496,37 @@ const createQuestion = () => { router.push('/createQuestion'); }; // 假设有�
 .cardButton:hover {
   background: #fff;
   color: #222;
+}
+
+.sub-title {
+  color: #ffd04b;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 20px 0 10px 10px;
+}
+
+.no-data {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.role-selector {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.role-selector :deep(.el-radio-button__inner) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #c5c5c5;
+  border-color: #ffd04b;
+}
+
+.role-selector :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background-color: #ffd04b;
+  color: #222;
+  border-color: #ffd04b;
+  box-shadow: -1px 0 0 0 #ffd04b;
 }
 </style>

@@ -36,7 +36,7 @@ const props = defineProps({
 
 import { getUserInfoById } from '../js/api.js'
 onMounted(() => {
-  // user.value = getUserInfoById(userId);
+  //user.value = getUserInfoById(localStorage.getItem('userId'));
   if (user.value.identity == 0) {
     identity.value = "老师"
   }

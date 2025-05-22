@@ -9,19 +9,16 @@ export const getTest = async () => {
     return res.data;
 }
 
+
 export const getUserInfoById = async (userId) => {
-    const res = await instance.post('/api/user/info',{
-        userId: userId
-    })
+    const res = await instance.get(`/user/info?user_id=${userId}`)
     if (res.status !== 200) {
         throw new Error('请求失败');
     }
     return res.data;
 }
-export const getCourseInfoById = async (courseId) => {
-    const res = await instance.post('/api/course/info',{
-        courseId: courseId
-    })
+export const getCourseInfoById = async () => {
+    const res = await instance.get('/course/info?course_id=1')
     if (res.status !== 200) {
         throw new Error('请求失败');
     }
@@ -41,6 +38,21 @@ export const getClassInfoById = async (classId) => {
     const res = await instance.post('/api/class/info',{
         classId: classId
     })
+    if (res.status !== 200) {
+        throw new Error('请求失败');
+    }
+    return res.data;
+}
+export const getCollectQuestion = async (questionId) => {
+    const res = await instance.get(`/collect/getLike?stu_id=${questionId}`);
+    if (res.status !== 200) {
+        throw new Error('请求失败');
+    }
+    return res.data;
+}
+
+export const getUserCourses = async (userId) => {
+    const res = await instance.get(`/course/self?user_id=${userId}`);
     if (res.status !== 200) {
         throw new Error('请求失败');
     }
