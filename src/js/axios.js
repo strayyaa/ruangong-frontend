@@ -5,10 +5,8 @@ const instance = axios.create({
     baseURL: 'http://10.192.53.103:8080',
     timeout: 50000, // 设置请求超时时间
     headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
         'Content-Type': 'application/json',
-    },
-    withCredentials: true, // 允许跨域请求携带cookie
+    }
 });
 
 // 添加响应拦截器

@@ -43,6 +43,7 @@ import { User, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { animate } from 'animejs'
+import { login } from '../js/api'
 
 const router = useRouter()
 const loginForm = reactive({
@@ -53,10 +54,10 @@ const loginRules = {
   account: [{ required: true, message: '请输入邮箱或学号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
+
 const handleLogin = async () => {
-  // TODO: 登录逻辑
-  ElMessage.success('登录成功')
-  router.push('/home')
+    const res = await login(loginForm.account, loginForm.password);
+    router.push('/home');
 }
 const goRegister = () => {
   router.push('/register')
