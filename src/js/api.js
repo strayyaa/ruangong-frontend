@@ -23,9 +23,7 @@ export const getUserInfoById = async (userId) => {
 }
 
 export const getCourseInfoById = async (courseId) => {
-    const res = await instance.post('/api/course/info',{
-        courseId: courseId
-    })
+    const res = await instance.get(`/course/info?course_id=${courseId}`)
     if (res.status !== 200) {
         throw new Error('请求失败');
     }

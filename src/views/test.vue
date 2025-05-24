@@ -24,12 +24,12 @@
   
 <script setup>
 import { onMounted, ref } from 'vue'
-import {getCourseInfoById, getTest} from '../js/api.js'
+import {getUserInfoById, getTest} from '../js/api.js'
 import NavBar from '../components/NavBar.vue';
 
 const message = ref({"name":"123"});
 const testfun = async () =>{
-  message.value = await getCourseInfoById();
+  message.value = await getUserInfoById(66);
 }
 const mouseenter = () => {
   animate('.loginbtn', {
