@@ -35,10 +35,27 @@ const props = defineProps({
 })
 
 import { getUserInfoById } from '../js/api.js'
-onMounted(() => {
-  // user.value = getUserInfoById(userId);
-  if (user.value.identity == 0) {
-    identity.value = "老师"
+
+onMounted(async () => {
+  try {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.error('未找到用户ID');
+      return;
+    }
+    
+    identity.value = localStorage.getItem('userIdentity') == 0 ? "老师" : "同学";
+    const userInfo = await getUserInfoById(userId);
+    if (userInfo) {
+      user.value = userInfo;
+      if (userInfo.identity == 0) {
+        identity.value = "老师"
+      }
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+    // 如果获取失败，使用默认值
+    user.value = { name: '未知用户', identity: 1 };
   }
 })
 </script>

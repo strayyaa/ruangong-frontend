@@ -695,7 +695,7 @@ const createClassSubmit = async () => {
     type: 'success',
     duration: 2000
   });
-  // createClassForm.value = await createClass(courseInfo.value.course_id,createClassForm.value.name,createClassForm.value.name);
+  createClassForm.value = await createClass(courseInfo.value.course_id,createClassForm.value.name);
   createClassForm.value.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
   sampleClasses.value.push(createClassForm.value);
   createClassForm.value = {
