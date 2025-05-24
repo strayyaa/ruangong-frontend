@@ -414,7 +414,7 @@ import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const courseId = ref(0);
-const status = ref(1); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
+const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
 const belongingClass = ref(0); // 学生在该课程的班级
 
 const distance = ref('140px');
@@ -690,7 +690,7 @@ const createClassSubmit = async () => {
     type: 'success',
     duration: 2000
   });
-  // createClassForm.value = await createClass(courseInfo.value.course_id,createClassForm.value.name,createClassForm.value.name);
+  createClassForm.value = await createClass(courseInfo.value.course_id,createClassForm.value.name);
   createClassForm.value.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
   sampleClasses.value.push(createClassForm.value);
   createClassForm.value = {
