@@ -408,13 +408,13 @@ import { ref, onMounted, onUnmounted,computed } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute } from 'vue-router';
 import router from '../router';
-import { getCourseInfoById,createClass } from '../js/api.js';
+import { getCourseInfoById,createClass, getClassListByCourseId } from '../js/api.js';
 import { animate } from 'animejs'
 import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const courseId = ref(0);
-const status = ref(1); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
+const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
 const belongingClass = ref(0); // 学生在该课程的班级
 
 const distance = ref('140px');
@@ -669,9 +669,14 @@ const handlePageChangeOfAssAndTea = (page) => {
 
 
 const sampleClasses = ref([
-  { code: 'C101',name:'a班', id:0,color: 'rgb(123,29,33)' },
-  { code: 'C202',name:'b班',id:1,color: 'rgb(122,122,180)' }
+  { class_code: 'C101',name:'a班', class_id:0,color: 'rgb(123,29,33)' },
+  { class_code: 'C202',name:'b班',class_id:1,color: 'rgb(122,122,180)' }
 ]);
+const getClass = async (id) => {
+  const res = await getClassListByCourseId(id);
+  console.log(res);
+  return res;
+};
 
 const drawerOfCreatingClass = ref(false);
 
@@ -755,6 +760,12 @@ onMounted(() => {
   courseId.value = route.params.id;
   getCourse(courseId.value).then((res) => {
     courseInfo.value = res;
+  });
+  getClass(courseId.value).then((res) => {
+    sampleClasses.value = res;
+    for (let i = 0; i < sampleClasses.value.length; i++) {
+      sampleClasses.value[i].color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
+    }
   });
 
   window.addEventListener('scroll', handleScroll)

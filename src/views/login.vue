@@ -47,7 +47,7 @@ import { animate } from 'animejs'
 const router = useRouter()
 const loginForm = reactive({
   account: '',
-  password: ''
+  password: '',
 })
 const loginRules = {
   account: [{ required: true, message: '请输入邮箱或学号', trigger: 'blur' }],
