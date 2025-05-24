@@ -60,7 +60,7 @@
           </div>
           <!-- 课程列表 -->
           <div v-if="displayCourses.length > 0" class="card-list">
-            <el-card v-for="course in displayCourses.slice(0, displayLimit)" :key="course.id" class="card">
+            <el-card v-for="course in displayCourses.slice(0, displayLimit)" :key="course.course_id" class="card">
               <div class="card-row">
                 <div class="card-info">
                   <span class="cardWord">{{ course.name }}</span>
@@ -160,12 +160,11 @@ const currentTab = ref('todo'); // 默认选中待办 Tab
 // 模拟用户身份 (0老师, 1学生, 2助教)
 const user = ref({ id: 61, name: '张三', identity: 2 }); // 切换这里的identity来模拟不同身份
 
-/*const userId = localStorage.getItem('userId');
-const user = ref();
+const userId = localStorage.getItem('userId');
 const getUserInfo = async () => {
   const res = await getUserInfoById(userId);
   user.value = res;
-}*/
+}
 
 const isTeacher = computed(() => user.value.identity === 0);
 const isStudent = computed(() => user.value.identity === 1);
@@ -221,7 +220,17 @@ const goToTodoItem = (item) => {
 };
 
 // 课程数据
-const studentCourses = ref([]);
+const studentCourses = ref([
+{
+    "course_id":0,
+    "name": "",
+    "creator_id": 0,
+    "syllabus": "",
+    "assMethod": "",
+    "score": 0.0,
+    "time": 0
+}
+]);
 const assistantCourses = ref([]);
 const teacherCourses = ref([]);
 const assistantRole = ref('student'); // 助教身份选择
@@ -240,6 +249,7 @@ const displayCourses = computed(() => {
 // 获取课程数据
 const fetchCourses = async () => {
   try {
+    console.log()
     const response = await getUserCourses(user.value.id);
     if (isStudent.value || isAssistant.value) {
       // 学生或助教身份
@@ -249,7 +259,8 @@ const fetchCourses = async () => {
         assistantCourses.value = response[1] || [];
       } else {
         // 纯学生身份
-        studentCourses.value = response || [];
+        studentCourses.value = response[0] || [];
+        console.log(studentCourses.value);
       }
     } else if (isTeacher.value) {
       // 教师身份
@@ -268,7 +279,7 @@ const handleRoleChange = (value) => {
 
 // 在组件挂载时获取课程数据
 onMounted(() => {
-  //getUserInfo();
+  getUserInfo();
   fetchCourses();
 });
 

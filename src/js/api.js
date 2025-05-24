@@ -31,9 +31,9 @@ export const getCourseInfoById = async (courseId) => {
 }
 
 export const createClass = async (courseId, className) => {
-    const res = await instance.post('/api/class/create',{
-        courseId: courseId,
-        className: className
+    const res = await instance.post('/class/create',{
+        course_id: courseId,
+        name: className
     })
     if (res.status !== 200) {
         throw new Error('请求失败');
@@ -98,7 +98,8 @@ export const login = async (account, password) => {
 
 export const getUserCourses = async (userId) => {
     try {
-        const res = await instance.get(`/course/user?user_id=${userId}`)
+        console.log(`Bearer ${localStorage.getItem("token")}`);
+        const res = await instance.get(`/course/self?user_id=${userId}`)
         if (res.status !== 200) {
             throw new Error('获取课程信息失败')
         }
