@@ -15,6 +15,7 @@ export const getUserInfoById = async (userId) => {
         if (res.status !== 200) {
             throw new Error('获取用户信息失败')
         }
+        console.log(res.data.data);
         return res.data.data
     } catch (error) {
         console.error('获取用户信息错误:', error.response || error)

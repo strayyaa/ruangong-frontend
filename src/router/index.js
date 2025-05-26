@@ -10,7 +10,7 @@ const routes = [
         component:homepage,
     },
     {
-        path:'/profile',
+        path:'/profile/:id',
         name:'profile',
         component:() => import('../views/profile.vue'),
     },
@@ -96,14 +96,31 @@ const router = createRouter({
     history:createWebHistory(),
 });
 
+// 白名单路由
+const whiteList = ['/', '/login', '/register', '/test43906']
+
 // 路由守卫
-// router.beforeEach((to,from,next) => {
-//     const userId = localStorage.getItem('userId');
-//     if(!userId && to.path !== '/login' && to.path !== '/' && to.path !== '/test43906'){
-//         next({path:'/'})
-//     }else{
-//         next();
-//     }
-// });
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token')
+    
+    if (token) {
+        // 有token的情况
+        if (to.path === '/login' || to.path === '/register') {
+            // 如果已登录，访问登录或注册页面时重定向到首页
+            next('/home')
+        } else {
+            next()
+        }
+    } else {
+        // 没有token的情况
+        if (whiteList.includes(to.path)) {
+            // 在白名单中，直接访问
+            next()
+        } else {
+            // 不在白名单中，重定向到登录页
+            next('/login')
+        }
+    }
+})
 
 export default router;

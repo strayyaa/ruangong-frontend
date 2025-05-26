@@ -20,7 +20,7 @@
             <div class="user-email">邮箱：{{ user.email }}</div>
             <div class="user-birthday">生日：{{ user.birthday }}</div>
           </div>
-          <el-button class="edit-btn" type="primary" size="small" @click="startEdit" v-if="!editing">修改资料</el-button>
+          <el-button class="edit-btn" type="primary" size="small" @click="startEdit" v-if="!editing && isCurrentUser">修改资料</el-button>
         </div>
         <el-form v-if="editing" :model="editUser" :rules="rules" ref="formRef" label-width="80px" class="profile-edit-form">
           <el-form-item label="姓名" prop="name">
@@ -46,58 +46,82 @@
       </el-card>
 
       <!-- 加入的课程 -->
-      <div class="section-title">加入的课程</div>
+      <!-- <div class="section-title">加入的课程</div>
       <div class="courses-list">
         <el-card v-for="course in courses" :key="course.id" class="course-card">
           <div class="course-cover">[课程封面] {{ course.title }}</div>
           <div class="course-info">{{ course.desc }}</div>
         </el-card>
-      </div>
+      </div> -->
 
       <!-- 我的任务 -->
-      <div class="section-title">我的任务</div>
+      <!-- <div class="section-title">我的任务</div>
       <div class="tasks-list">
         <el-card v-for="task in tasks" :key="task.id" class="task-card">
           <div class="task-title">{{ task.title }}</div>
           <div class="task-desc">{{ task.desc }}</div>
           <div class="task-deadline">截止日期：{{ task.deadline }}</div>
         </el-card>
-      </div>
+      </div> -->
     </div>
   </el-container>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { animate } from 'animejs'
+import { getUserInfoById } from '../js/api'
+
+const route = useRoute()
+const userId = route.params.id
+const currentUserId = localStorage.getItem('userId');
+
+const isCurrentUser = ref(userId === currentUserId);
 
 const editing = ref(false)
 const formRef = ref()
 const user = reactive({
   avatar: '',
-  studentId: '2023123456',
-  name: '张三',
-  identity: '学生',
-  email: 'zhangsan@example.com',
-  birthday: '2002-01-01',
-  registerTime: '2023-09-01',
+  studentId: '',
+  name: '',
+  identity: '',
+  email: '',
+  birthday: '',
+  registerTime: '',
 })
 const editUser = ref({})
 const rules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
 }
-const courses = ref([
-  { id: 1, title: '高等数学', desc: '2023秋季学期' },
-  { id: 2, title: '软件工程', desc: '2023秋季学期' },
-  { id: 3, title: '数据结构', desc: '2023春季学期' },
-])
-const tasks = ref([
-  { id: 1, title: '高数作业1', desc: '积分计算', deadline: '2023-10-10' },
-  { id: 2, title: '软工项目需求分析', desc: '提交需求文档', deadline: '2023-10-15' },
-  { id: 3, title: '数据结构实验', desc: '链表实现', deadline: '2023-10-20' },
-])
+const courses = ref([])
+const tasks = ref([])
+
+const fetchUserInfo = async () => {
+  try {
+    console.log(777)
+    const res = await getUserInfoById(route.params.id)
+    console.log(888)
+    user.studentId = res.username || ''
+    user.name = res.name || ''
+    user.identity = res.identity === 0 ? '老师' : '同学'
+    user.email = res.mail || ''
+    user.birthday = res.birthday || ''
+    console.log(isCurrentUser.value)
+    console.log(currentUserId)
+    console.log(userId)
+    // console.log()
+    // 这里可以根据实际接口返回的数据结构调整
+    // courses.value = data.courses || []
+    // tasks.value = data.tasks || []
+  } catch (e) {
+    console.log(999)
+    ElMessage.error('获取用户信息失败')
+  }
+}
+
 const startEdit = () => {
   editUser.value = { ...user }
   editing.value = true
@@ -114,6 +138,7 @@ const saveInfo = () => {
 const cancelEdit = () => {
   editing.value = false
 }
+
 onMounted(() => {
   animate('.toanimate', {
     y: [
@@ -125,6 +150,8 @@ onMounted(() => {
     loopDelay: 3000,
     loop: true
   })
+  console.log(666)
+  fetchUserInfo()
 })
 </script>
 
@@ -176,13 +203,16 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 32px;
-  position: relative;
+  width: 100%;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 .user-basic {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-top: 4px;
+  flex-grow: 1;
 }
 .user-name {
   color: #fff;
@@ -198,9 +228,9 @@ onMounted(() => {
   font-size: 1rem;
 }
 .edit-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
+  /* position: absolute; */
+  /* top: 0; */
+  /* right: 0; */
 }
 .profile-edit-form {
   margin-top: 16px;
