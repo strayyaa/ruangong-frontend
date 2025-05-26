@@ -99,6 +99,21 @@ export const login = async (account, password) => {
     }
 }
 
+export const register = async (registerData) => {
+    console.log(registerData)
+    try {
+        const res = await instance.post('/user/reg', registerData)
+        console.log(res)
+        if (res.status !== 200) {
+            throw new Error('注册失败')
+        }
+        return res.data
+    } catch (error) {
+        console.error('注册错误:', error.response || error)
+        throw new Error(error.response?.data?.message || '注册失败，请稍后重试')
+    }
+}
+
 export const getUserCourses = async (userId) => {
     try {
         console.log(`Bearer ${localStorage.getItem("token")}`);

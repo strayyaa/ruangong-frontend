@@ -103,22 +103,16 @@ const whiteList = ['/', '/login', '/register', '/test43906']
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('token')
     
-    if (token) {
-        // 有token的情况
-        if (to.path === '/login' || to.path === '/register') {
-            // 如果已登录，访问登录或注册页面时重定向到首页
-            next('/home')
-        } else {
-            next()
-        }
+    // 无论是否有token，都允许访问白名单页面
+    if (whiteList.includes(to.path)) {
+        next();
     } else {
-        // 没有token的情况
-        if (whiteList.includes(to.path)) {
-            // 在白名单中，直接访问
-            next()
+        // 如果没有token且访问的不是白名单页面，则重定向到登录页
+        if (!token) {
+            next('/login');
         } else {
-            // 不在白名单中，重定向到登录页
-            next('/login')
+            // 如果有token且访问的不是白名单页面，则正常跳转
+            next();
         }
     }
 })

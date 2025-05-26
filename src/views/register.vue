@@ -10,9 +10,16 @@
       </h1>
     </div>
     <div class="form-container">
-      <el-form :model="registerForm" :rules="registerRules" ref="registerFormRef" class="register-form">
+      <el-form :model="registerForm" :rules="registerRules" ref="formRef" class="register-form">
         <el-form-item prop="studentId">
           <el-input v-model="registerForm.studentId" placeholder="学号">
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="name">
+          <el-input v-model="registerForm.name" placeholder="姓名（可选）">
             <template #prefix>
               <el-icon><User /></el-icon>
             </template>
@@ -77,10 +84,13 @@ import { User, Lock, Message } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { animate } from 'animejs'
-import { sendVerificationCode as sendVerificationCodeApi } from '../js/api'
+import { sendVerificationCode as sendVerificationCodeApi, register as registerApi } from '../js/api'
 
 const router = useRouter()
 const countdown = ref(0)
+const formRef = ref()
+let formInstance = null
+
 const registerForm = reactive({
   studentId: '',
   password: '',
@@ -88,7 +98,8 @@ const registerForm = reactive({
   birthday: '',
   email: '',
   code: '',
-  role: 'student'
+  role: 'student',
+  name: '',
 })
 const registerRules = {
   studentId: [{ required: true, message: '请输入学号', trigger: 'blur' }],
@@ -111,9 +122,44 @@ const registerRules = {
   role: [{ required: true, message: '请选择身份', trigger: 'change' }]
 }
 const handleRegister = async () => {
-  // TODO: 注册逻辑
-  ElMessage.success('注册成功')
-  router.push('/login')
+  try {
+    console.log(7777)
+    await formInstance.validate();
+    console.log(888)
+    // 构建注册数据
+    const registerData = {
+      username: registerForm.studentId,
+      password: registerForm.password,
+      confirmPassword: registerForm.confirmPassword,
+      name: registerForm.name,
+      mail: registerForm.email,
+      birthday: registerForm.birthday ? registerForm.birthday.toISOString().split('T')[0] : null,
+      identity: registerForm.role === 'student' ? 1 : 0,
+      verifyCode: registerForm.code,
+    };
+
+    // 调用注册接口
+    const res = await registerApi(registerData);
+    console.log(res)
+    if (res.success === true) { // 假设接口成功状态码为0
+      ElMessage.success('注册成功')
+      router.push('/home') // 注册成功后跳转到首页
+    } else {
+        // 根据接口返回的错误信息进行提示
+        ElMessage.error(res.message || '注册失败')
+    }
+
+  } catch (error) {
+    console.error('注册错误:', error);
+    // 处理表单验证或接口调用错误
+    if (error.response && error.response.data && error.response.data.message) {
+         ElMessage.error(error.response.data.message)
+    } else if (error.message) {
+         ElMessage.error(error.message)
+    } else {
+        ElMessage.error('注册失败，请稍后重试')
+    }
+  }
 }
 const goLogin = () => {
   router.push('/login')
@@ -140,6 +186,10 @@ const handleSendVerificationCode = async () => {
   }
 }
 onMounted(() => {
+  if (formRef.value) {
+    formInstance = formRef.value;
+  }
+
   animate('.toanimate', {
     y: [
       { to: '-2.75rem', ease: 'outExpo', duration: 600 },
