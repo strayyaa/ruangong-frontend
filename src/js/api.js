@@ -16,6 +16,7 @@ export const getUserInfoById = async (userId) => {
         if (res.status !== 200) {
             throw new Error('获取用户信息失败')
         }
+        console.log(res.data.data);
         return res.data.data
     } catch (error) {
         console.error('获取用户信息错误:', error.response || error)
@@ -94,6 +95,21 @@ export const login = async (account, password) => {
     } catch (error) {
         console.error('登录错误:', error.response || error)
         throw new Error(error.response?.data?.message || '登录失败，请稍后重试')
+    }
+}
+
+export const register = async (registerData) => {
+    console.log(registerData)
+    try {
+        const res = await instance.post('/user/reg', registerData)
+        console.log(res)
+        if (res.status !== 200) {
+            throw new Error('注册失败')
+        }
+        return res.data
+    } catch (error) {
+        console.error('注册错误:', error.response || error)
+        throw new Error(error.response?.data?.message || '注册失败，请稍后重试')
     }
 }
 

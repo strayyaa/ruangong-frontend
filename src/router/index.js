@@ -11,7 +11,7 @@ const routes = [
         component:homepage,
     },
     {
-        path:'/profile',
+        path:'/profile/:id',
         name:'profile',
         component:() => import('../views/profile.vue'),
     },
@@ -117,14 +117,25 @@ const router = createRouter({
     history:createWebHistory(),
 });
 
+// 白名单路由
+const whiteList = ['/', '/login', '/register', '/test43906']
+
 // 路由守卫
-// router.beforeEach((to,from,next) => {
-//     const userId = localStorage.getItem('userId');
-//     if(!userId && to.path !== '/login' && to.path !== '/' && to.path !== '/test43906'){
-//         next({path:'/'})
-//     }else{
-//         next();
-//     }
-// });
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token')
+    
+    // 无论是否有token，都允许访问白名单页面
+    if (whiteList.includes(to.path)) {
+        next();
+    } else {
+        // 如果没有token且访问的不是白名单页面，则重定向到登录页
+        if (!token) {
+            next('/login');
+        } else {
+            // 如果有token且访问的不是白名单页面，则正常跳转
+            next();
+        }
+    }
+})
 
 export default router;
