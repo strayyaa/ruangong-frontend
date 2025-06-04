@@ -1,8 +1,8 @@
 <template>
   <NavBar />
   <div class="background-layer">
-    <h1 :style="{ 'margin-top': distance }" class="questionTitle" @click="scrollToTop">{{ questionInfo.title }}</h1>
-    <p :style="{ opacity: contentOpacity }" class="questionInfoContent">题目类型：{{ questionInfo.type }}</p>
+    <h1 :style="{ 'margin-top': distance }" class="questionTitle" @click="scrollToTop">{{ questionInfo.description }}</h1>
+    <p :style="{ opacity: contentOpacity }" class="questionInfoContent">题目类型：{{ getTypeName(questionInfo.type) }}</p>
     <p :style="{ opacity: contentOpacity }" class="questionInfoContent">创建者：{{ questionInfo.creator_name }}</p>
     <p :style="{ opacity: contentOpacity }" class="questionInfoContent">是否公开：{{ questionInfo.is_public ? '是' : '否' }}</p>
 
@@ -21,22 +21,13 @@
         <template #label>
           <span class="component-title" @click="scrollToPos">{{ tab }}</span>
         </template>
-
-        <!-- 题目描述 -->
-        <template v-if="tab === '题目描述'">
-          <div class="content-section">
-            <h2>题目描述</h2>
-            <p>{{ questionInfo.description }}</p>
-          </div>
-        </template>
-
         <!-- 题目选项 -->
-        <template v-else-if="tab === '题目选项'">
+        <template v-if="tab === '题目选项'">
           <div class="content-section">
             <h2>题目选项</h2>
-            <div v-if="questionInfo.content">
-              <div v-for="(option, key) in questionInfo.content" :key="key" class="option-item">
-                <span class="option-key">{{ key }}:</span>
+            <div v-if="parsedOptions.length">
+              <div v-for="(option, idx) in parsedOptions" :key="idx" class="option-item">
+                <span class="option-key">{{ optionLabels[idx] }}:</span>
                 <span class="option-value">{{ option }}</span>
               </div>
             </div>
@@ -70,6 +61,44 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { animate } from 'animejs';
+import {getQuestionInfo,getUserInfoById,getTeacherNameById} from '../js/api';
+
+
+
+const user = ref({});
+const userId = localStorage.getItem('userId');
+const getUserInfo = async () => {
+  console.log('开始获取用户信息', localStorage.getItem('userId'));
+  const res = await getUserInfoById(localStorage.getItem('userId'));
+  console.log('获取用户信息:', res);
+  user.value = res;
+  console.log(user.value);
+}
+const fetchQuesitonInfo =async ()=>{
+  console.log('开始获取题目id',route.params.id,'的信息');
+  const res = await getQuestionInfo(route.params.id);
+  questionInfo.value = res;
+  console.log('题目的信息为',questionInfo.value);
+  const TeacherName = await getTeacherNameById(questionInfo.value.creator_id);
+  console.log('创建者id',questionInfo.value.creator_id);
+  console.log('创建老师名称',TeacherName);
+  questionInfo.value.creator_name = TeacherName;
+}
+// 根据题目类型返回中文名称
+function getTypeName(type) {
+  switch (type) {
+    case 0:
+      return '选择题';
+    case 1:
+      return '填空题';
+    case 2:
+      return '简答题';
+    case 3:
+      return '编程题';
+    default:
+      return '未知类型';
+  }
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -102,26 +131,10 @@ const scrollToTop = () => {
 };
 
 // 题目信息（写死）
-const questionInfo = ref({
-  id: 0,
-  title: '二叉树遍历',
-  type: '选择题',
-  is_public: true,
-  creator_id: 101,
-  creator_name: '张老师',
-  description: '给定一棵二叉树，输出其前序遍历序列。',
-  content: {
-    'A': '根-左-右',
-    'B': '左-根-右',
-    'C': '左-右-根',
-    'D': '根-右-左'
-  },
-  answer: 'A',
-  analysis: '前序遍历的顺序是：根节点 -> 左子树 -> 右子树。'
-});
+const questionInfo = ref({});
 
-const navItems = ['题目描述', '题目选项', '答案', '解析'];
-const currentTab = ref('题目描述');
+const navItems = ['题目选项', '答案', '解析'];
+const currentTab = ref('题目选项');
 
 const registerMouseEnter = () => {
   animate('.register-btn', {
@@ -142,10 +155,22 @@ const registerMouseLeave = () => {
     easing: 'easeOutExpo'
   });
 };
-
-onMounted(() => {
-  questionId.value = route.params.id;
-  window.addEventListener('scroll', handleScroll);
+const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const parsedOptions = computed(() => {
+  if (!questionInfo.value.content) return [];
+  let arr = [];
+  try {
+    arr = JSON.parse(questionInfo.value.content);
+  } catch (e) {
+    // 兼容后端返回已是数组的情况
+    arr = Array.isArray(questionInfo.value.content) ? questionInfo.value.content : [];
+  }
+  return arr;
+});
+onMounted(async () => {
+  () => {questionId.value = route.params.id;window.addEventListener('scroll', handleScroll);}
+  await getUserInfo();
+  fetchQuesitonInfo();
 });
 
 onUnmounted(() => {

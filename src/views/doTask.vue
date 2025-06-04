@@ -1,100 +1,214 @@
 <template>
   <NavBar />
   <div class="background-layer">
-    <h1 :style="{ 'margin-top': distance }" class="taskTitle" @click="scrollToTop">{{ taskInfo.name }}</h1>
-    <p :style="{ opacity: contentOpacity }" class="taskInfoContent">开始时间：{{ taskInfo.begin_time }}</p>
-    <p :style="{ opacity: contentOpacity }" class="taskInfoContent">截止时间：{{ taskInfo.end_time }}</p>
-    <p :style="{ opacity: contentOpacity }" class="taskInfoContent">是否可重复提交：{{ taskInfo.is_multi ? '是' : '否' }}</p>
-
-    <el-button
-      class="register-btn"
-      :style="{ top: distanceOfButton }"
-      @mouseenter="registerMouseEnter"
-      @mouseleave="registerMouseLeave"
-      @click="router.push('/class/' + taskInfo.course_id)"
-    >->返回班级页面</el-button>
+    <h1 :style="{ 'margin-top': distance }" class="taskTitle" @click="scrollToTop">{{ exer.name }}</h1>
+    <p :style="{ opacity: contentOpacity }" class="taskInfoContent">{{ formatDate(exer.begin_time) }} ~ {{ formatDate(exer.end_time) }}</p>
+    <p :style="{ opacity: contentOpacity }" class="taskInfoContent">是否可以多次提交：{{ exer.is_multi }}</p>
+    <p :style="{ opacity: contentOpacity }" class="totalScore">总分：{{ totalMaxScore }}分</p>
   </div>
 
   <div class="content-container">
-    <div v-for="(question, index) in taskInfo.questions" :key="question.id" class="question-card">
+    <div v-for="(question, index) in questionList" :key="question.id" class="question-card">
       <div class="question-header">
         <h2>题目 {{ index + 1 }}</h2>
-        <el-button 
-          class="favorite-btn"
-          :class="{ 'is-favorite': question.is_favorite }"
-          @click="toggleFavorite(question.id)"
-        >
-          <el-icon>
-            <component :is="question.is_favorite ? StarFilled : Star" />
-          </el-icon>
-        </el-button>
+        <div class="header-right">
+          <span class="score-label">总分：{{ maxScoresList[index] }}分</span>
+          <el-button
+            class="star-button"
+            :class="{ 'is-collected': isCollected(question.prob_id) }"
+            @click="toggleCollect(question.prob_id)"
+          >
+            <el-icon v-if="isCollected(question.prob_id)"><StarFilled /></el-icon>
+            <el-icon v-else><Star /></el-icon>
+          </el-button>
+        </div>
       </div>
-      
       <div class="question-content">
-        <h3>{{ question.title }}</h3>
-        <p class="question-description">{{ question.description }}</p>
-        
+        <h3>
+          {{ question.description }}
+          <span style="font-size:1rem;color:#ffd04b;margin-left:16px;">
+            [{{ typeMap[question.type] }}]
+          </span>
+        </h3>
         <!-- 选择题 -->
-        <template v-if="question.type === '选择题'">
-          <el-radio-group v-model="answers[question.id]" class="options-group">
+        <template v-if="question.type === 0">
+          <el-radio-group v-model="studentAnswers[index]" class="options-group">
             <el-radio 
-              v-for="(option, key) in question.content" 
+              v-for="(option, key) in JSON.parse(question.content)" 
               :key="key" 
-              :label="key"
+              :label="String.fromCharCode(65 + parseInt(key))"
               class="option-item"
             >
-              <span class="option-label">{{ key }}: {{ option }}</span>
+              <span class="option-label">{{ String.fromCharCode(65 + parseInt(key)) }}: {{ option }}</span>
             </el-radio>
           </el-radio-group>
+          <!-- <div class="auto-score">得分：{{ scoreList[index] }}分 <span v-if="scoreList[index] < maxScoresList[index]" style="color:#ffd04b">（错误，正确答案：{{question.answer}}）</span></div> -->
         </template>
-
         <!-- 填空题 -->
-        <template v-else-if="question.type === '填空题'">
+        <template v-else-if="question.type === 1">
           <el-input
-            v-model="answers[question.id]"
+            v-model="studentAnswers[index]"
             type="textarea"
-            :rows="3"
-            placeholder="请输入答案"
+            :rows="1"
             class="answer-input"
+            @paste.prevent
+            @copy.prevent
+            @cut.prevent
           />
         </template>
-
-        <!-- 简答题 -->
-        <template v-else-if="question.type === '简答题'">
+        <!-- 简答题和编程题 -->
+        <template v-else>
           <el-input
-            v-model="answers[question.id]"
+            v-model="studentAnswers[index]"
             type="textarea"
-            :rows="6"
-            placeholder="请输入答案"
+            :rows="3"
             class="answer-input"
+            @paste.prevent
+            @copy.prevent
+            @cut.prevent
           />
         </template>
       </div>
     </div>
-
     <div class="submit-section">
       <el-button 
         type="primary" 
         size="large"
-        @click="submitAnswers"
-        :disabled="!canSubmit"
+        @click="saveAnswer"
+        
       >
-        提交答案
+        暂存答案
+      </el-button>
+      <el-button 
+        type="primary" 
+        size="large"
+        @click="submitTask"
+        color="#ffd04b"
+      >
+        提交任务
       </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, computed,toRaw  } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Star, StarFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-
+import { Star, StarFilled } from '@element-plus/icons-vue'
+import { getUserInfoById, getExerAllinfoById, getExerQuestionById, pushCollectProblem, deleteCollectProblem, getCollectProblem,saveExerciseAnswer,submitExercise } from '../js/api';
+// 格式化日期
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
 const route = useRoute();
 const router = useRouter();
-const taskId = ref(0);
+const userId = localStorage.getItem('userId');
+const user = ref({});
+const getUserInfo = async () => {
+  console.log('开始获取用户信息', userId);
+  const res = await getUserInfoById(userId);
+  console.log('获取用户信息:', res);
+  user.value = res;
+};
+const exer = ref({});
+const fetchExerName= async ()=>{
+    try {
+      const ref = await getExerAllinfoById(route.params.id);
+      console.log('获取任务名称:', ref);
+      exer.value = ref;
+      // 初始化题目列表
+    } catch (error) {
+      ElMessage.error('获取任务名称失败');
+      console.error('获取任务名称失败:', error);
+    }
+}
+const questionList = ref([]);
+const studentAnswers = ref([]);
+const maxScoresList = ref([]);
+const typeMap = ['选择', '填空', '简答', '编程'];
+const fetchQuestionList = async () => {
+  try {
+    const response = await getExerQuestionById(route.params.id);
+    questionList.value = response || [];
+    studentAnswers.value = new Array(questionList.value.length).fill("");
+    maxScoresList.value = questionList.value.map(q => q.score);
+  } catch (error) {
+    ElMessage.error('获取题目列表失败');
+    console.error('获取题目列表失败:', error);
+  }
+};
+const submitTask = async () => {
+  try {
+    console.log('开始提交任务', route.params.id, userId);
+    const response = await submitExercise(route.params.id,userId);
+    ElMessage.success('任务提交成功');
+    router.back();
+  } catch (error) {
+    ElMessage.error('任务提交失败，请稍后再试');
+    console.error('任务提交失败:', error);
+  }
+};
+const saveAnswer = async () => {
+  try {
+    console.log('开始暂存任务', route.params.id, userId, studentAnswers.value);
+    const response = await saveExerciseAnswer(route.params.id,userId,studentAnswers);
+    ElMessage.success('任务暂存成功');
+  } catch (error) {
+    ElMessage.error('任务暂存失败，请稍后再试');
+    console.error('任务暂存失败:', error);
+  }
+};
+const totalMaxScore = computed(() => {
+  return maxScoresList.value.reduce((sum, score) => sum + (score || 0), 0);
+});
+
+const collectedProblems = ref([]);
+
+// 获取收藏题目列表
+const fetchCollectedProblems = async () => {
+  try {
+    const res = await getCollectProblem(userId);
+    console.log('获取收藏题目列表:', res);
+    collectedProblems.value = res || [];
+  } catch (error) {
+    console.error('获取收藏题目列表失败:', error);
+  }
+};
+
+// 判断题目是否已收藏
+const isCollected = (probId) => {
+  return collectedProblems.value.some(problem => problem.prob_id === probId);
+};
+
+// 切换收藏状态
+const toggleCollect = async (probId) => {
+  try {
+    if (isCollected(probId)) {
+      await deleteCollectProblem(probId, userId);
+      collectedProblems.value = collectedProblems.value.filter(problem => problem.prob_id !== probId);
+      ElMessage.success('取消收藏成功');
+      console.log("取消收藏后的列表为",collectedProblems.value);
+    } else {
+      await pushCollectProblem(probId, userId);
+      collectedProblems.value.push({ prob_id: probId });
+      ElMessage.success('收藏成功');
+      console.log("添加收藏后的列表为",collectedProblems.value);
+    }
+  } catch (error) {
+    ElMessage.error('操作失败：' + error.message);
+  }
+};
+
+onMounted(async () => {
+  await getUserInfo();
+  await fetchExerName();
+  await fetchQuestionList();
+  await fetchCollectedProblems();
+});
 
 const distance = ref('140px');
 const distanceOfButton = ref('630px');
@@ -115,118 +229,6 @@ const scrollToTop = () => {
   });
 };
 
-// 任务信息（写死）
-const taskInfo = ref({
-  id: 1,
-  course_id: 101,
-  creator_id: 201,
-  begin_time: '2024-03-20 00:00:00',
-  end_time: '2024-03-27 23:59:59',
-  is_public: true,
-  name: '第三章作业',
-  is_multi: false,
-  probs: [1, 2, 3],
-  scores: [30, 30, 40],
-  questions: [
-    {
-      id: 1,
-      title: '二叉树遍历',
-      type: '选择题',
-      description: '给定一棵二叉树，输出其前序遍历序列。',
-      content: {
-        'A': '根-左-右',
-        'B': '左-根-右',
-        'C': '左-右-根',
-        'D': '根-右-左'
-      },
-      is_favorite: false
-    },
-    {
-      id: 2,
-      title: '快速排序',
-      type: '填空题',
-      description: '请写出快速排序的平均时间复杂度。',
-      is_favorite: false
-    },
-    {
-      id: 3,
-      title: '动态规划',
-      type: '简答题',
-      description: '请详细解释动态规划的基本思想和应用场景。',
-      is_favorite: false
-    },
-    {
-      id: 4,
-      title: '冒泡排序',
-      type: '填空题',
-      description: '请写出冒泡排序的最坏时间复杂度。',
-      is_favorite: false
-    }
-  ]
-});
-
-const answers = ref({});
-const canSubmit = computed(() => {
-  return taskInfo.value.questions.every(q => answers.value[q.id]);
-});
-
-const toggleFavorite = (questionId) => {
-  const question = taskInfo.value.questions.find(q => q.id === questionId);
-  if (question) {
-    question.is_favorite = !question.is_favorite;
-    ElMessage({
-      message: question.is_favorite ? '收藏成功' : '取消收藏',
-      type: 'success',
-      duration: 2000
-    });
-  }
-};
-
-const submitAnswers = () => {
-  // 这里添加提交答案的逻辑
-  ElMessage({
-    message: '提交成功',
-    type: 'success',
-    duration: 2000
-  });
-};
-
-const registerMouseEnter = () => {
-  animate('.register-btn', {
-    scale: 1.2,
-    backgroundColor: '#FFFFFF',
-    color: 'rgba(0, 0, 0, 0.8)',
-    duration: 300,
-    easing: 'easeOutExpo'
-  });
-};
-
-const registerMouseLeave = () => {
-  animate('.register-btn', {
-    scale: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    color: 'rgba(203, 203, 203, 0.8)',
-    duration: 300,
-    easing: 'easeOutExpo'
-  });
-};
-
-onMounted(() => {
-  taskId.value = route.params.id;
-  window.addEventListener('scroll', handleScroll);
-  
-  // 禁用复制粘贴
-  document.addEventListener('copy', (e) => e.preventDefault());
-  document.addEventListener('paste', (e) => e.preventDefault());
-  document.addEventListener('cut', (e) => e.preventDefault());
-});
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
-  document.removeEventListener('copy', (e) => e.preventDefault());
-  document.removeEventListener('paste', (e) => e.preventDefault());
-  document.removeEventListener('cut', (e) => e.preventDefault());
-});
 </script>
 
 <style scoped>
@@ -242,7 +244,6 @@ onUnmounted(() => {
   background-position: center;
   z-index: -1;
 }
-
 .taskTitle {
   position: relative;
   color: rgb(206, 206, 206);
@@ -251,7 +252,6 @@ onUnmounted(() => {
   margin-left: 80px;
   font-weight: bold;
 }
-
 .taskInfoContent {
   position: relative;
   color: rgb(206, 206, 206);
@@ -261,7 +261,6 @@ onUnmounted(() => {
   margin-left: 80px;
   max-width: 800px;
 }
-
 .register-btn {
   position: absolute;
   right: 40px;
@@ -275,7 +274,6 @@ onUnmounted(() => {
   backdrop-filter: blur(5px);
   box-shadow: none !important;
 }
-
 .content-container {
   position: relative;
   top: 600px;
@@ -283,57 +281,42 @@ onUnmounted(() => {
   background-color: rgba(255, 255, 255, 0.05);
   min-height: calc(100vh - 600px);
 }
-
 .question-card {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   padding: 20px;
   margin-bottom: 30px;
 }
-
 .question-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-
 .question-header h2 {
   color: #c5c5c5;
   font-size: 1.8rem;
   margin: 0;
 }
-
-.favorite-btn {
-  background: transparent;
-  border: none;
-  color: #c5c5c5;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.score-label {
+  color: cyan;
+  font-size: 1.3rem;
+  font-weight: bold;
 }
-
-.favorite-btn.is-favorite {
-  color: #ffd04b;
-}
-
 .question-content {
   color: #c5c5c5;
   margin-bottom: 10px;
 }
-
 .question-content h3 {
   font-size: 1.6rem;
   margin-bottom: 15px;
-  color:white;
+  color: white;
 }
-
 .question-description {
   font-size: 1.5rem;
   margin-bottom: 20px;
-  color:white;
+  color: white;
 }
-
 .options-group {
   display: flex;
   flex-direction: column;
@@ -342,42 +325,121 @@ onUnmounted(() => {
   margin-left: 40px;
   margin-top: 20px;
 }
-
 .option-item {
   font-size: 1.35rem;
   color: #c5c5c5;
   align-items: center;
   display: flex;
 }
-
 .option-label {
   font-size: 1.35rem;
   color: rgb(206, 206, 206);
   font-weight: 500;
 }
-
 .answer-input {
   width: 100%;
   background-color: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #c5c5c5;
+  font-size: 1.2rem;
 }
-
-.answer-input :deep(.el-textarea__inner) {
-  background-color: rgba(255, 255, 255, 0.1);
+.auto-score, .manual-score {
+  margin-top: 15px;
+  font-size: 1.3rem;
+  color: cyan;
+  font-weight: bold;
+}
+.score-input {
+  width: 120px;
+}
+.comment-section {
+  margin-top: 10px;
+}
+.comment-input {
+  font-size: 1.2rem;
+  width: 100%;
+  background-color: rgba(255,255,255,0.08);
   color: #c5c5c5;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-size:1.2rem
 }
-
+.final-comment-input {
+  width: 100%;
+  margin-bottom: 20px;
+  background-color: rgba(255,255,255,0.08);
+  color: #c5c5c5;
+}
 .submit-section {
   text-align: center;
   margin-top: 40px;
   margin-bottom: 40px;
 }
-
 .submit-section .el-button {
   padding: 15px 40px;
   font-size: 1.2rem;
 }
+.floating-score {
+  position: fixed;
+  right: 40px;
+  bottom: 40px;
+  background: rgba(0,0,0,0.7);
+  color: cyan;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 18px 36px;
+  border-radius: 18px;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  pointer-events: none;
+}
+.totalScore {
+  position: relative;
+  color: #ffd04b;
+  font-size: 1.5rem;
+  text-align: left;
+  margin-top: 20px;
+  margin-left: 80px;
+  max-width: 800px;
+  font-weight: bold;
+}
+/* 选中项的背景和字体颜色 */
+:deep(.el-radio.is-checked .el-radio__inner) {
+  border-color: #ffd04b !important;
+  background-color: #ffd04b !important;
+}
+
+:deep(.el-radio.is-checked .el-radio__input) {
+  color: #222 !important;
+}
+
+:deep(.el-radio.is-checked .option-label) {
+  color: #ffd04b !important;
+  font-weight: bold;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.star-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #c5c5c5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.star-button:hover {
+  transform: scale(1.1);
+}
+
+.star-button.is-collected {
+  color: #ffd04b;
+}
+
+.star-button i {
+  font-size: 24px;
+}
+
 </style> 

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import test from "../views/test.vue";
 import homepage from '../views/homepage.vue';
 import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
+import { pa } from 'element-plus/es/locales.mjs';
 
 const routes = [
     {
@@ -70,7 +71,7 @@ const routes = [
         component: () => import('../views/doTask.vue')
     },
     {
-        path:'/checkTask/:id',
+        path:'/checkTask/:exer_id/:user_id',
         name:'CheckTask',
         component: () => import('../views/checkTask.vue')
     },
@@ -88,6 +89,26 @@ const routes = [
         path:'/createTask',
         name:'CreateTask',
         component: () => import('../views/createTask.vue')
+    },
+    {
+        path:'/checkTaskList/:id',
+        name:'CheckTaskList',
+        component:()=> import('../views/checkTaskList.vue')
+    },
+    {
+        path:'/selectCourseList',
+        name:'SelectCourseList',
+        component:()=> import('../views/selectCourseList.vue')
+    },
+    {
+        path:'/showCheckDetail/:exer_id/:user_id',
+        name:'ShowCheckDetail',
+        component:()=> import('../views/showCheckDetail.vue')
+    },
+    {
+        path:'/showExerInfo/:exer_id',
+        name:'ShowExerInfo',
+        component:()=> import('../views/showExerInfo.vue')
     }
 ]
 
