@@ -6,6 +6,7 @@
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">考核方式：{{ courseInfo.assMethod }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学分：{{ courseInfo.score }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学时：{{ courseInfo.time }}</p>
+    <div v-if="status !== null && targetClass">
     <el-button
         v-if = "status == 1"
         class="register-btn"
@@ -23,7 +24,7 @@
         @mouseleave="registerMouseLeave"
         @click="dealWithButtonClick"
     >->添加课程助教/老师</el-button>
-
+      </div>
 
     <el-drawer
       title="添加助教/老师"
@@ -177,7 +178,7 @@
         <template v-else-if="tab === '班级'">
           <el-row :gutter="20">
             <el-col :span="6" v-for="cls in sampleClasses" :key="cls.code">
-              <el-card class="class-box" @click="router.push('/class/' + cls.class_id)">
+              <el-card class="class-box" @click="jumpToClass(cls.class_id)">
                 <div class="color-block" :style="{ backgroundColor: cls.color }"></div>
                 <div class="class-code">{{ cls.class_code }}-{{ cls.name }}</div>
               </el-card>
@@ -421,7 +422,7 @@ import { Base64 } from 'js-base64';
 
 const route = useRoute();
 const courseId = ref(0);
-const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
+const status = ref(null); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
 const userAllCourses = ref([]);
 const judgeStatus = async () => {
   const userId = localStorage.getItem('userId');
@@ -814,10 +815,33 @@ const sampleClasses = ref([
   { class_code: 'C101',name:'a班', class_id:0,color: 'rgb(123,29,33)' },
   { class_code: 'C202',name:'b班',class_id:1,color: 'rgb(122,122,180)' }
 ]);
+const jumpToClass = (id) => {
+  if(status.value == 1){
+    if(targetClass.value.class_id == id){
+      router.push('/class/' + id);
+      return;
+    }else{
+      ElMessage({
+        message: '无法访问别人的班级',
+        type: 'warning',
+        duration: 2000
+      });
+    }
+  }
+  router.push('/class/' + id);
+};
 const getClass = async (id) => {
   const res = await getClassListByCourseId(id,localStorage.getItem('userId'));
-  console.log(res);
-  return res.data;
+  console.log("Class info:",res.data);
+  if (res.success) {
+    targetClass.value = res.data[0];
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
 };
 const getAllClasses = async (id) => {
   const res = await getAllClassListByCourseId(id,localStorage.getItem('userId'));
@@ -1009,7 +1033,7 @@ onMounted(async () => {
     console.log(courseInfo.value);
   });
   // 获取用户状态
-  judgeStatus();
+  await judgeStatus();
 
   // 获取课程下的班级列表
   await getAllClasses(courseId.value).then((res) => {
@@ -1019,12 +1043,13 @@ onMounted(async () => {
     }
   });
   
+
+  console.log("用户状态2："+status.value);
   // 学生：获取自己所属班级
   if(status.value == 1){
-    await getClass(courseId.value).then((res) => {
-      targetClass.value = res.data[0];
-    });
+    await getClass(courseId.value);
   }
+  console.log("获取到的班级信息:",targetClass.value);
   // 助教/老师：获取课程所有学生;获得所有学生列表（添加助教);获取所有老师列表（添加老师）
   if(status.value == 0||status.value == 2){
     await getStudentsOfCourse();

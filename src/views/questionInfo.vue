@@ -25,7 +25,7 @@
         <template v-if="tab === '题目选项'">
           <div class="content-section">
             <h2>题目选项</h2>
-            <div v-if="parsedOptions.length">
+            <div v-if="questionInfo.type===0">
               <div v-for="(option, idx) in parsedOptions" :key="idx" class="option-item">
                 <span class="option-key">{{ optionLabels[idx] }}:</span>
                 <span class="option-value">{{ option }}</span>

@@ -133,6 +133,7 @@ const typeMap = ['选择', '填空', '简答', '编程'];
 const fetchQuestionList = async () => {
   try {
     const response = await getExerQuestionById(route.params.id);
+    console.log('获取题目列表:', response);
     questionList.value = response || [];
     studentAnswers.value = new Array(questionList.value.length).fill("");
     maxScoresList.value = questionList.value.map(q => q.score);

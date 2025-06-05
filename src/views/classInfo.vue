@@ -4,6 +4,7 @@
     <h1 :style = "{'margin-top': distance}" class="courseNameTitle" @click="scrollToTop">{{ courseInfo.name }}-{{ classInfo.name }}</h1>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">班级代码：{{ classInfo.class_code }}</p>
 
+    <div v-if="status&&classInfo">
     <el-button
         v-if = "status != 3"
         class="register-btn"
@@ -20,7 +21,7 @@
         @mouseleave="registerMouseLeave"
         @click="chooseClass"
     >选择课程</el-button>
-    
+    </div>
   </div>
 
   <div class="tabs-container">
@@ -537,8 +538,10 @@
                 >
                     <el-menu-item
                     :key="2"
-                    :index="'2'">
-                    <span style="font-size: 1.5rem;font-weight: bold;" v-if="status!=1">未到截止日期</span></el-menu-item>
+                    :index="'2'"
+                    >
+                    <span style="font-size: 1.5rem;font-weight: bold;" v-if="status!=1">未到截止日期</span>
+                    <span style="font-size: 1.5rem;font-weight: bold;" v-if="status==1">未开始</span></el-menu-item>
                     <el-menu-item
                     :key="0"
                     :index="'0'" 
@@ -667,18 +670,17 @@
                         <span class="cardWord">{{ task.is_public }}</span>
                         <span class="cardWord">{{ task.is_multi }}</span>
                     </div>
-                    <div v-if = "status==0||status == 2"class = "card-actions" style="display:flex;flex-wrap:wrap;">
+                    <div v-if = "status==0||status == 2" class = "card-actions" style="display:flex;flex-wrap:wrap;">
                         <el-button class="cardButton" @click="router.push('/showExerInfo/'+task.exer_id)">查看任务</el-button>
                         <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea">下载反馈报告</el-button>
                         <el-button class="cardButton" v-if="toChooseTasks == 0 && task.reach_time" @click="router.push('/checkTaskList/'+task.exer_id)">批改任务</el-button>
                     </div>
-                    <div v-if = "status==1"class = "card-actions" style="display:flex;flex-wrap:wrap;">
-                        <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea">下载反馈报告</el-button>
+                    <div v-if = "status==1" class = "card-actions" style="display:flex;flex-wrap:wrap;">
                         <el-button class="cardButton" v-if="toChooseTasks == 0 && task.reach_time" >已经截止</el-button>
                         <el-button class="cardButton" v-if="toChooseTasks == 0 && !task.reach_time" @click="router.push('/doTask/'+task.exer_id)">去完成</el-button>
                         <el-button class="cardButton" v-if="toChooseTasks == 1 && !task.reach_time && task.is_multi" @click="router.push('/doTask/'+task.exer_id)">去完成</el-button>
                         <el-button class="cardButton" v-if="toChooseTasks == 1 && !task.reach_time && !task.is_multi">已提交</el-button>
-                        <el-button class="cardButton" v-if="toChooseTasks == 1 && task.reach_time" @click="router.push('/showCheckDetail/'+task.exer_id+'/'+localStorage.getItem('userId'))">查看批改信息</el-button>
+                        <el-button class="cardButton" v-if="toChooseTasks == 1 && task.reach_time" @click="goToLookCheckDetail(task.exer_id)">查看批改信息</el-button>
                     </div>
                     </div>
                 </el-card>
@@ -715,7 +717,7 @@ import { el } from 'element-plus/es/locales.mjs';
 const route = useRoute();
 const classId = ref(0);
 const courseId = ref(0);
-const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4无关老师
+const status = ref(null); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4无关老师
 const userAllCourses = ref([]);
 const judgeStatus = async () => {
   const userId = localStorage.getItem('userId');
@@ -1452,10 +1454,16 @@ const getTasksToShowOfStudent = async ()=>{
         task.is_done = true;
         const now = new Date();
         const endTime = new Date(task.end_time);
+        const beginTime = new Date(task.begin_time);
         if(now < endTime){
           task.reach_time = false;
         }else{
           task.reach_time = true;
+        }
+        if(now < beginTime){
+          task.before_start = true;
+        }else{
+          task.before_start = false;
         }
         for(const task2 of res2.data){
           if(task.exer_id === task2.exer_id){
@@ -1635,10 +1643,13 @@ const drawerSubmitTask = async () => {
 }
 const filteredTasks = computed(() =>{
     if(status.value == 1){
+        if(toChooseTasks.value == 2){
+            return tasksToShow.value.filter(task=>task.before_start==true);
+        }
         if(toChooseTasks.value == 0){
             return tasksToShow.value.filter(task => task.is_done == false);
         }else{
-            return tasksToShow.value.filter(task => task.is_done == true);
+            return tasksToShow.value.filter(task => task.is_done == true && task.before_start == false);
         }
     }
     if(status.value != 1){
@@ -1653,7 +1664,7 @@ const filteredTasks = computed(() =>{
     }
 })
 const pagedTasks = computed(() => {
-  const start = (currentPageOfRes.value - 1) * pageSize
+  const start = (currentPageOfTasks.value - 1) * pageSize
   return filteredTasks.value.slice(start, start + pageSize)
 })
 const currentPageOfTasks = ref(1);
@@ -1666,6 +1677,10 @@ const handlePageChangeOfTasks = (page) => {
 const goToProfile = (id) => {
   router.push(`/profile/${id}`);
 };
+
+const goToLookCheckDetail = (id)=>{
+  router.push(`/showCheckDetail/${id}/${localStorage.getItem('userId')}`);
+}
 
 onMounted(async() =>  {
   console.log("当前班级id："+classId.value);

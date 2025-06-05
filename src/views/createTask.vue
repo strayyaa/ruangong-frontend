@@ -313,16 +313,26 @@ const submitTask = async() => {
   const res = await createTask(chosenCourse.value,localStorage.getItem('userId'),new Date().getTime(),new Date().getTime()+7*24*60*60*1000,taskForm.value.public,taskForm.value.name,false,taskForm.value.questionIds,addedQuestions.value.filter(q => q.score !== undefined).map(q => q.score));
   if(res.success) {
     ElMessage.success('任务创建成功')
+    localStorage.removeItem(STORAGE_KEY_IDS)
+    localStorage.removeItem(STORAGE_KEY_QUESTIONS)
+    localStorage.removeItem('taskName')
+    localStorage.removeItem('taskPublic')
+    localStorage.removeItem('taskCourseId')
+    localStorage.removeItem('taskCourseName')
+    loadFromLocalStorage
+    setTimeout(() => {
+        router.back();
+      }, 2000);
   } else {
     ElMessage.error(res.errorMsg)
   }
-  localStorage.removeItem(STORAGE_KEY_IDS)
-  localStorage.removeItem(STORAGE_KEY_QUESTIONS)
-  localStorage.removeItem('taskName')
-  localStorage.removeItem('taskPublic')
-  localStorage.removeItem('taskCourseId')
-  localStorage.removeItem('taskCourseName')
-  loadFromLocalStorage
+  // localStorage.removeItem(STORAGE_KEY_IDS)
+  // localStorage.removeItem(STORAGE_KEY_QUESTIONS)
+  // localStorage.removeItem('taskName')
+  // localStorage.removeItem('taskPublic')
+  // localStorage.removeItem('taskCourseId')
+  // localStorage.removeItem('taskCourseName')
+  // loadFromLocalStorage
 }
 </script>
 

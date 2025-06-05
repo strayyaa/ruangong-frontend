@@ -475,7 +475,7 @@ export const getAllClassListByCourseId = async (courseId,userId) => {
         if (res.status !== 200) {
             throw new Error('获取班级列表失败')
         }
-        console.log('获取班级列表:', res)
+        console.log('获取所有班级列表:', res)
         return res.data
     } catch (error) {
         console.error('获取班级列表错误:', error.response || error)

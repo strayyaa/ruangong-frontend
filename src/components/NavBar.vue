@@ -12,9 +12,7 @@
       class="el-menu-demo fixed-navbar"
     >
       <el-menu-item index="/home" class="el-menu-item-trans">课程管理系统</el-menu-item>
-      <el-menu-item index="/courses" class="el-menu-item-trans">我的课程</el-menu-item>
-      <el-menu-item index="/tasks" class="el-menu-item-trans">我的任务</el-menu-item>
-      <el-menu-item index="/questions" class="el-menu-item-trans">我的题目</el-menu-item>
+      <el-menu-item index="/selectCourseList" class="el-menu-item-trans">选课大厅</el-menu-item>
       <el-text size="large" style="margin-top: -4px;font-weight: 700;" class="el-text">
         <el-link type="primary" @click="goToProfile" style="cursor:pointer; color:inherit; text-decoration:none;">
           {{ user.name }} {{ identity }}，你好！

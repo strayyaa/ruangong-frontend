@@ -24,8 +24,8 @@
               <div class="card-row">
                 <div class="card-info">
                   <span class="cardWord">{{ item.name }}</span>
-                  <span class="cardWord">开始时间：{{ formatDate(item.begin_time) }}</span>
-                  <span class="cardWord">截止时间：{{ formatDate(item.end_time) }}</span>
+                  <span class="cardWord">开始：{{ formatDate(item.begin_time) }}</span>
+                  <span class="cardWord">截止：{{ formatDate(item.end_time) }}</span>
                 </div>
                 <div class="card-actions">
                   <el-button class="cardButton" @click="goToTodoItem(item)">{{ getTodoButtonText() }}</el-button>
@@ -59,7 +59,7 @@
           
           <!-- 课程列表 -->
           <div v-if="displayCourses.length > 0" class="card-list">
-            <el-card v-for="course in displayCourses.slice(0, displayLimit)" :key="course.course_id" class="card">
+            <el-card v-for="course in displayCourses" :key="course.course_id" class="card">
               <div class="card-row">
                 <div class="card-info">
                   <span class="cardWord">{{ course.name }}</span>
@@ -97,7 +97,7 @@
             </div>
           </div>
           <div v-if="currentTaskList.length > 0" class="card-list">
-            <el-card v-for="task in currentTaskList.slice(0, displayLimit)" :key="task.id" class="card">
+            <el-card v-for="task in currentTaskList" :key="task.id" class="card">
               <div class="card-row">
                 <div class="card-info">
                   <span class="cardWord">{{ task.name }}</span>
@@ -143,7 +143,7 @@
 
           <!-- 题目列表 -->
           <div v-if="currentQuestionList.length > 0" class="card-list">
-            <el-card v-for="question in currentQuestionList.slice(0, displayLimit)" :key="question.prob_id" class="card">
+            <el-card v-for="question in currentQuestionList" :key="question.prob_id" class="card">
               <div class="card-row">
                 <div class="card-info">
                   <span class="cardWord">{{ getQuestionTypeText(question.type) }}</span>
