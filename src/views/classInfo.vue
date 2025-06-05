@@ -4,7 +4,6 @@
     <h1 :style = "{'margin-top': distance}" class="courseNameTitle" @click="scrollToTop">{{ courseInfo.name }}-{{ classInfo.name }}</h1>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">班级代码：{{ classInfo.class_code }}</p>
 
-    <div v-if="status&&classInfo">
     <el-button
         v-if = "status != 3"
         class="register-btn"
@@ -22,7 +21,6 @@
         @click="chooseClass"
     >选择课程</el-button>
     </div>
-  </div>
 
   <div class="tabs-container">
   <el-tabs v-model="currentTab" class="main-tabs">
@@ -233,7 +231,8 @@
                 style="flex: 1; padding: 16px; background-color: transparent;
                         overflow-y: auto; height: 100vh;">
                 <!-- 表头 -->
-                <el-card class="card" >
+                 <el-empty v-if="processList.length === 0" description="暂无进度，请添加进度"></el-empty>
+                <el-card class="card" v-if="processList.length > 0">
                     <div class="card-row" style="display: flex; justify-content: space-between;">
                     <div class="card-info" style="display: flex; flex-wrap: wrap;">
                         <span class="cardWord"><strong>资源编码</strong></span>
@@ -366,8 +365,8 @@
 
                 <!-- 右侧按钮 -->
                 <div class="card-actions">
-                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.id)">预览</span></el-button>
-                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.id)">下载</span></el-button>
+                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.url)">预览</span></el-button>
+                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.res_id)">下载</span></el-button>
                 </div>
               </div>
             </el-card>
@@ -391,7 +390,7 @@
             />
             <el-button 
             style="margin-left:30px;margin-right: 20px;margin-top: -10px;scale: 1.2;font-size: 1rem;font-weight: bold;"
-            @click="drawerOfAddAssAndTea=true">从课程{{ isAssistant }}中导入到班级</el-button>
+            @click="drawerOfAddAssAndTea=true">为班级添加老师/助教</el-button>
 
             <el-drawer
                 title="添加助教/老师"
@@ -672,7 +671,7 @@
                     </div>
                     <div v-if = "status==0||status == 2" class = "card-actions" style="display:flex;flex-wrap:wrap;">
                         <el-button class="cardButton" @click="router.push('/showExerInfo/'+task.exer_id)">查看任务</el-button>
-                        <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea">下载反馈报告</el-button>
+                        <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea(task.exer_id)">下载反馈报告</el-button>
                         <el-button class="cardButton" v-if="toChooseTasks == 0 && task.reach_time" @click="router.push('/checkTaskList/'+task.exer_id)">批改任务</el-button>
                     </div>
                     <div v-if = "status==1" class = "card-actions" style="display:flex;flex-wrap:wrap;">
@@ -697,7 +696,7 @@
             </div>
         </template>
       </el-tab-pane>
-      <div style="height: 45vh;"></div>
+      <!-- <div style="height: 45vh;"></div> -->
     </el-tabs>
     
     </div>
@@ -896,7 +895,8 @@ const uploadData = computed(() => ({
 const uploadHeaders = {
   'Authorization': `${localStorage.getItem('token')}`
 }
-const handleUploadSuccess = (response) => {
+const handleUploadSuccess = async (response) => {
+  await getStudentList();
   ElMessage.success('上传成功')
   // 你可以根据 response 做进一步处理
 }
@@ -1051,7 +1051,12 @@ const getAllProcess = async () => {
   const res = await getProcessesByClassId(courseId.value,classId.value);
   if(res.success){
     processList.value = res.data;
-    await handleProgressSelect(processList.value[0].process_id);
+    if(processList.value.length > 0){
+      await handleProgressSelect(processList.value[0].process_id);
+    }else{
+      sampleResources.value = [];
+    }
+    
   }else{
     ElMessage({
       type:'error',
@@ -1177,7 +1182,8 @@ const uploadDataOfResourceUpdate = computed(()=>({
   res_id:currentResId.value,
   is_public:false,
 }))
-const handleUploadSuccessOfResourceUpdate = ()=>{
+const handleUploadSuccessOfResourceUpdate = async ()=>{
+  await handleProgressSelect(selectedProgressId.value);
   ElMessage({
     type:'success',
     message:'更新成功'
@@ -1207,7 +1213,7 @@ const handleUploadSuccessOfResource = async (response)=>{
   })
   console.log("上传的资源信息:",createResourceForm.value);
   console.log("上传的资源对应进度：",selectedProgressId.value);
-  await getResourcesByProcessId(courseId.value,selectedProgressId.value);
+  await handleProgressSelect(selectedProgressId.value);
 }
 const handleUploadErrorOfResource = (error)=>{
   ElMessage({
@@ -1238,6 +1244,7 @@ const fetchAllTags = async () => {
   }
 };
 const getClassOfAssAndTea = async(user)=>{
+  console.log("id:",user.user_id);
   const res2 = await getClassOfAssAndTeaOfCourse(courseId.value,user.user_id);
   if (res2.success) {
     user.classes = res2.data.map(cls => cls.name);
@@ -1519,11 +1526,9 @@ const getAllPubTasks = async()=>{
   }
 }
 const downloadReportOfAssAndTea = async(id)=>{
-  if(status.value == 1){
-    const res = await generateReportOfTaskOfStu(id,localStorage.getItem('userId'));
-  }else{
-    const res = await generateReportOfTaskOfAssAndTea(id);
-  }
+
+  const res = await generateReportOfTaskOfAssAndTea(id);
+  
   if(res.success){
     window.open(res.data);
     ElMessage({

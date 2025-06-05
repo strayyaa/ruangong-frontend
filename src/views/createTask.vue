@@ -1,14 +1,15 @@
 <template>
   <NavBar />
-  <div class="page-container">
-    <h1 class="page-title">创建任务</h1>
+  <div class="background-layer">
+    <h1 :style="{ 'margin-top': distancee }" class="page-title">创建任务</h1>
 
     <div class="form-container">
       <el-form :model="taskForm" label-width="200px">
         <el-form-item>
           <template #label>
             <div style="width: 300px;">
-            <span class="inputTitle">任务名称</span></div>
+              <span class="inputTitle">任务名称</span>
+            </div>
           </template>
           <el-input v-model="taskForm.name" />
         </el-form-item>
@@ -16,18 +17,28 @@
         <el-form-item>
           <template #label>
             <div style="width: 300px;">
-            <span class="inputTitle">任务是否公开：</span></div>
+              <span class="inputTitle">任务是否公开：</span>
+            </div>
           </template>
           <el-switch v-model="taskForm.public" />
         </el-form-item>
+
         <el-form-item>
           <template #label>
             <div style="width: 300px;">
-            <span class="inputTitle">选择添加到哪个课程:</span></div>
+              <span class="inputTitle">选择添加到哪个课程:</span>
+            </div>
           </template>
           <span class="cardWord">{{ chosenCourseName }}</span>
-          <el-button type="primary" @click="drawerOfCourseChoose=true;">选择课程</el-button>
+          <el-button 
+            type="primary" 
+            @click="drawerOfCourseChoose=true"
+            class="action-btn"
+            @mouseenter="btnMouseEnter"
+            @mouseleave="btnMouseLeave"
+          >选择课程</el-button>
         </el-form-item>
+
         <el-drawer
           title="选择课程"
           v-model="drawerOfCourseChoose"
@@ -35,96 +46,139 @@
           :append-to-body="true"
           direction="rtl"
         >
-         <el-card v-for="course in courseList" :key="course.course_id" class="card">
-          <div class="card-row">
-              <!-- 左侧内容 -->
+          <el-card v-for="course in courseList" :key="course.course_id" class="card">
+            <div class="card-row">
               <div class="card-info">
-              <span class="drawer-card-word">{{ course.course_id }}</span>
-              <span class="drawer-card-word">{{ course.name }}</span>
+                <span class="drawer-card-word">{{ course.course_id }}</span>
+                <span class="drawer-card-word">{{ course.name }}</span>
               </div>
-
-              <!-- 右侧按钮 -->
               <div class="card-actions">
-                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="chooseCourse(course.course_id,course.name)">选择</span></el-button>
+                <el-button 
+                  class="cardButton"
+                  @mouseenter="btnMouseEnter"
+                  @mouseleave="btnMouseLeave"
+                >
+                  <span style="margin-top: 14px;" @click="chooseCourse(course.course_id,course.name)">选择</span>
+                </el-button>
               </div>
-          </div>
-          </el-card> 
+            </div>
+          </el-card>
         </el-drawer>
+
         <el-form-item>
-          <el-button type="primary" @click="openDrawer">添加题目</el-button>
-          <el-button style="margin-left: 20px;" @click="createNewQuestion">创建新题目</el-button>
+          <el-button 
+            type="primary" 
+            @click="openDrawer"
+            class="action-btn"
+            @mouseenter="btnMouseEnter"
+            @mouseleave="btnMouseLeave"
+          >添加题目</el-button>
+          <el-button 
+            style="margin-left: 20px;"
+            @click="createNewQuestion"
+            class="action-btn"
+            @mouseenter="btnMouseEnter"
+            @mouseleave="btnMouseLeave"
+          >创建新题目</el-button>
         </el-form-item>
 
         <div style="margin-top: 20px">
-          <h3>已添加题目：</h3>
-          <div v-if="Object.keys(groupedQuestions).length === 0">暂无题目</div>
+          <h3 class="section-title">已添加题目：</h3>
+          <div v-if="Object.keys(groupedQuestions).length === 0" class="empty-tip">暂无题目</div>
           <div v-for="(questions, type) in groupedQuestions" :key="type" class="question-group">
-            <h4 v-if="type==0">选择题</h4>
-            <h4 v-else-if="type==1">填空题</h4>
-            <h4 v-else-if="type==2">简答题</h4>
-            <h4 v-else-if="type==3">编程题</h4>
+            <h4 v-if="type==0" class="group-title">选择题</h4>
+            <h4 v-else-if="type==1" class="group-title">填空题</h4>
+            <h4 v-else-if="type==2" class="group-title">简答题</h4>
+            <h4 v-else-if="type==3" class="group-title">编程题</h4>
             
             <ul>
-              
               <li v-for="q in questions" :key="q.prob_id" class="question-card">
                 <p><strong>ID：</strong>{{ q.prob_id }}</p>
                 <p><strong>内容：</strong>{{ q.description }}</p>
                 <div v-if="q.type ===0">
-                <p><strong>选项：</strong></p>
-                <ul class="option-list">
-                  <li v-for="(opt, idx) in JSON.parse(q.content)" :key="idx">
-                    {{ String.fromCharCode(65 + idx) }}. {{ opt }}
-                  </li>
-                </ul>
+                  <p><strong>选项：</strong></p>
+                  <ul class="option-list">
+                    <li v-for="(opt, idx) in JSON.parse(q.content)" :key="idx">
+                      {{ String.fromCharCode(65 + idx) }}. {{ opt }}
+                    </li>
+                  </ul>
                 </div>
                 <p><strong>答案：</strong>{{ q.answer }}</p>
                 <p><strong>解析：</strong>{{ q.analysis }}</p>
                 <div>
-                <span>填写具体分数：</span>
-                <el-input-number v-model="q.score" :min="0" :max="100" style="width: 100px;" />
+                  <span>填写具体分数：</span>
+                  <el-input-number v-model="q.score" :min="0" :max="100" style="width: 100px;" />
                 </div>
-                <el-button type="danger" @click="removeQuestion(q.prob_id)">删除</el-button>
+                <el-button 
+                  type="danger" 
+                  @click="removeQuestion(q.prob_id)"
+                  class="action-btn"
+                  @mouseenter="btnMouseEnter"
+                  @mouseleave="btnMouseLeave"
+                >删除</el-button>
               </li>
             </ul>
-            
           </div>
         </div>
 
         <el-form-item>
-          <el-button type="success" @click="submitTask">提交任务</el-button>
+          <el-button 
+            type="success" 
+            @click="submitTask"
+            class="submit-btn"
+            @mouseenter="btnMouseEnter"
+            @mouseleave="btnMouseLeave"
+          >提交任务</el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <el-drawer 
-    v-model="drawerVisible" title="从题库中选择题目" direction="rtl"
-    :append-to-body="true"
-    :before-close="() => (drawerVisible = false)">
+      v-model="drawerVisible" 
+      title="从题库中选择题目" 
+      direction="rtl"
+      :append-to-body="true"
+      :before-close="() => (drawerVisible = false)"
+    >
       <div>
-      <el-button 
-      v-if = "drawerShowPri"
-      style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
-      @click="drawerShowPri=false">切换到公有题目</el-button>
-      <el-button 
-      v-if = "!drawerShowPri"
-      style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
-      @click="drawerShowPri=false">切换到私有题目</el-button>
+        <el-button 
+          v-if="drawerShowPri"
+          style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
+          @click="drawerShowPri=false"
+          class="action-btn"
+          @mouseenter="btnMouseEnter"
+          @mouseleave="btnMouseLeave"
+        >切换到公有题目</el-button>
+        <el-button 
+          v-if="!drawerShowPri"
+          style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
+          @click="drawerShowPri=false"
+          class="action-btn"
+          @mouseenter="btnMouseEnter"
+          @mouseleave="btnMouseLeave"
+        >切换到私有题目</el-button>
       </div>
-       <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">搜索
-                                <span v-if="drawerShowPri">私有</span><span v-else>公有</span>题目：</span>
+      <span style="color: rgb(206,206,206);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">搜索
+        <span v-if="drawerShowPri">私有</span><span v-else>公有</span>题目：</span>
       <el-input v-model="searchText" placeholder="搜索题目" style="margin-bottom: 20px;" />
       <el-card v-for="q in pagedQuestions" :key="q.id" class="card">
         <div class="card-row">
           <div class="card-info">
-          <span class="drawer-card-word">{{ q.prob_id }}</span>
-          <span v-if="q.type===0" class="drawer-card-word">选择题</span>
-          <span v-else-if="q.type===1" class="drawer-card-word">填空题</span>
-          <span v-else-if="q.type===2" class="drawer-card-word">简答题</span>
-          <span v-else-if="q.type===3" class="drawer-card-word">编程题</span>
-          <span class="drawer-card-word">{{ q.description.slice(0, 10) }}<span v-if="q.description.length > 10">...</span></span>
+            <span class="drawer-card-word">{{ q.prob_id }}</span>
+            <span v-if="q.type===0" class="drawer-card-word">选择题</span>
+            <span v-else-if="q.type===1" class="drawer-card-word">填空题</span>
+            <span v-else-if="q.type===2" class="drawer-card-word">简答题</span>
+            <span v-else-if="q.type===3" class="drawer-card-word">编程题</span>
+            <span class="drawer-card-word">{{ q.description.slice(0, 10) }}<span v-if="q.description.length > 10">...</span></span>
           </div>
           <div class="card-actions">
-          <el-button style="margin-left: auto" @click="addQuestion(q)">添加</el-button>
+            <el-button 
+              style="margin-left: auto" 
+              @click="addQuestion(q)"
+              class="action-btn"
+              @mouseenter="btnMouseEnter"
+              @mouseleave="btnMouseLeave"
+            >添加</el-button>
           </div>
         </div>
       </el-card>
@@ -141,15 +195,43 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createTask, getAllPriQuestions, getAllPubQuestions, getUserCourses } from '../js/api'
 import NavBar from '../components/NavBar.vue'
 import { ElMessage } from 'element-plus'
-import { lo } from 'element-plus/es/locales.mjs'
+import { animate } from 'animejs'
 
 const router = useRouter()
 const route = useRoute()
+
+const distancee = ref('140px')
+
+const handleScroll = () => {
+  const currentScroll = window.pageYOffset
+  const scrollProgress = Math.min(currentScroll / 500, 1)
+  distancee.value = `${Math.max(140 - scrollProgress * 140, 80)}px`
+}
+
+const btnMouseEnter = (event) => {
+  animate(event.target, {
+    scale: 1.2,
+    backgroundColor: '#FFFFFF',
+    color: 'rgba(0, 0, 0, 0.8)',
+    duration: 300,
+    easing: 'easeOutExpo'
+  })
+}
+
+const btnMouseLeave = (event) => {
+  animate(event.target, {
+    scale: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: 'rgba(203, 203, 203, 0.8)',
+    duration: 300,
+    easing: 'easeOutExpo'
+  })
+}
 
 const taskForm = ref({
   name: '',
@@ -251,28 +333,33 @@ const loadFromLocalStorage = () => {
 }
 
 onMounted(async () => {
-  // 先恢复之前缓存的题目列表
+  
   loadFromLocalStorage()
-  await fetchCourse();
-  await fetchAllQuestions();
+  await fetchCourse()
+  await fetchAllQuestions()
 
-
-  const newQuestionStr = localStorage.getItem('newQuestion');
+  const newQuestionStr = localStorage.getItem('newQuestion')
   if (newQuestionStr) {
     try {
-      const newQuestion = JSON.parse(newQuestionStr);
+      const newQuestion = JSON.parse(newQuestionStr)
       if (!taskForm.value.questionIds.includes(newQuestion.prob_id)) {
-        taskForm.value.questionIds.push(newQuestion.prob_id);
-        newQuestion.score = 10; // 初始化分数
-        addedQuestions.value.push(newQuestion);
-        saveToLocalStorage();
+        taskForm.value.questionIds.push(newQuestion.prob_id)
+        newQuestion.score = 10
+        addedQuestions.value.push(newQuestion)
+        saveToLocalStorage()
       }
-      localStorage.removeItem('newQuestion'); // 用完即删，避免重复添加
+      localStorage.removeItem('newQuestion')
     } catch (err) {
-      console.error('新题目解析失败：', err);
+      console.error('新题目解析失败：', err)
     }
   }
+  window.addEventListener('scroll', handleScroll)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+
 const questionBank = computed(() => {
   return drawerShowPri ? priQuestions.value : pubQuestions.value;
 });
@@ -337,55 +424,111 @@ const submitTask = async() => {
 </script>
 
 <style scoped>
-.page-container {
-  padding: 20px;
-  background-color: #ffffff;
-  min-height: 100vh;
+.background-layer {
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9)),
+              url('../assets/course_id_background.jpg');
+  background-size: cover;
+  margin-top: -80px;
+  margin-left: -8px;
+  background-position: center;
+  z-index: -1;
 }
+
 .page-title {
-  font-size: 2rem;
+  position: relative;
+  color: rgb(206, 206, 206);
+  font-size: 4rem;
+  text-align: left;
+  margin-left: 80px;
   font-weight: bold;
-  margin-bottom: 20px;
 }
+
 .form-container {
-  background-color: #fff;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  padding: 20px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  padding: 40px;
   border-radius: 12px;
   width: 75%;
+  margin: 40px auto;
+  color: rgb(206, 206, 206);
 }
-.card{
-  margin-bottom: 5px;
+
+.inputTitle {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #c5c5c5;
 }
-.cardWord{
+
+.action-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(203, 203, 203, 0.8);
+  border: none !important;
+  border-radius: 25px !important;
+  backdrop-filter: blur(5px);
+  box-shadow: none !important;
+  scale: 1.5;
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-top:20px;
+}
+
+.submit-btn {
+  width: 75%;
+  height: 50px;
   font-size: 1.2rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(203, 203, 203, 0.8);
+  border: none !important;
+  border-radius: 25px !important;
+  backdrop-filter: blur(5px);
+  box-shadow: none !important;
+}
+
+.card {
+  margin-bottom: 5px;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
+}
+
+.cardWord {
+  font-size: 1.5rem;
   font-weight: bold;
   margin-left: 20px;
-  margin-right: 10px; 
+  margin-right: 10px;
   display: inline-block;
-  width: 100px;
+  width: 150px;
+  color: #c5c5c5;
 }
-.drawer-card-word{
+
+.drawer-card-word {
   font-size: 0.8rem;
   font-weight: bold;
   margin-left: 20px;
-  margin-right: 10px; 
+  margin-right: 10px;
   display: inline-block;
   width: 60px;
+  color: #525252;
 }
-.cardButton{
+
+.cardButton {
   margin-top: -50px;
   height: 90px;
   width: 100px;
   margin-bottom: -50px;
   margin-right: -22px;
   font-size: 1.1rem;
-  transition: all 0.3s ease-in-out !important;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(82, 82, 82, 0.8);
+  border: none !important;
+  border-radius: 25px !important;
+  backdrop-filter: blur(5px);
+  box-shadow: none !important;
 }
-.cardButton:hover{
-  background-color: rgb(66, 66, 66);
-  color: white;
-}
+
 .card-row {
   display: flex;
   justify-content: space-between;
@@ -394,34 +537,100 @@ const submitTask = async() => {
 
 .card-info {
   display: flex;
-  flex-wrap: wrap; /* 可换行，也可不加 */
+  flex-wrap: wrap;
 }
+
 .card-actions {
   display: flex;
   gap: 10px;
   margin-right: 10px;
 }
-.inputTitle {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
+
+.section-title {
+  color: #c5c5c5;
+  font-size: 1.8rem;
+  margin-bottom: 20px;
 }
+
+.empty-tip {
+  color: #c5c5c5;
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 20px;
+}
+
+.group-title {
+  color: #c5c5c5;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
 .question-group {
   margin-bottom: 20px;
   padding: 15px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.05);
 }
+
 .question-card {
   margin: 10px 0;
-  padding: 10px;
-  background: #fff;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  color: #c5c5c5;
 }
+
 .option-list {
   padding-left: 20px;
   list-style-type: disc;
+  color: #c5c5c5;
 }
+
+:deep(.el-input__inner),
+:deep(.el-textarea__inner) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #525151 !important;
+}
+
+:deep(.el-switch__core) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+:deep(.el-drawer) {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+:deep(.el-drawer__header) {
+  color: #c5c5c5 !important;
+}
+
+:deep(.el-pagination) {
+  color: #c5c5c5 !important;
+}
+
+:deep(.el-pagination .el-pagination__total),
+:deep(.el-pagination .el-pagination__jump) {
+  color: #c5c5c5 !important;
+}
+
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #c5c5c5 !important;
+}
+
+:deep(.el-pagination .el-pager li) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #c5c5c5 !important;
+}
+
+:deep(.el-pagination .el-pager li.active) {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
 </style>
+

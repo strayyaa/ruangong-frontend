@@ -40,7 +40,7 @@
           </el-input>
         </el-form-item>
         <el-form-item prop="birthday">
-          <el-date-picker v-model="registerForm.birthday" type="date" placeholder="生日（可选）" style="width: 100%" />
+          <el-date-picker v-model="registerForm.birthday" type="date" placeholder="生日（可选）" style="width: 100%" clearable="false"/>
         </el-form-item>
         <el-form-item prop="email">
           <el-input v-model="registerForm.email" placeholder="邮箱">
@@ -146,14 +146,14 @@ const handleRegister = async () => {
       router.push('/home') // 注册成功后跳转到首页
     } else {
         // 根据接口返回的错误信息进行提示
-        ElMessage.error(res.message || '注册失败')
+        ElMessage.error(res.errorMsg || '注册失败')
     }
 
   } catch (error) {
     console.error('注册错误:', error);
     // 处理表单验证或接口调用错误
-    if (error.response && error.response.data && error.response.data.message) {
-         ElMessage.error(error.response.data.message)
+    if (error.response && error.response.data && error.response.data.errorMsg) {
+         ElMessage.error(error.response.data.errorMsg)
     } else if (error.message) {
          ElMessage.error(error.message)
     } else {
@@ -170,20 +170,20 @@ const handleSendVerificationCode = async () => {
     return
   }
   
-  try {
-    await sendVerificationCodeApi(registerForm.email)
-    ElMessage.success('验证码已发送到您的邮箱')
-    countdown.value = 60
-    const timer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0) {
-        clearInterval(timer)
-      }
-    }, 1000)
-  } catch (error) {
-    ElMessage.error(error.message || '验证码发送失败，请稍后重试')
-    console.error('发送验证码失败:', error)
+  
+  const res =await sendVerificationCodeApi(registerForm.email);
+  if(!res.success) {
+    ElMessage.error(res.errorMsg);
+    return;
   }
+  ElMessage.success('验证码已发送到您的邮箱')
+  countdown.value = 60
+  const timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
 }
 onMounted(() => {
   if (formRef.value) {

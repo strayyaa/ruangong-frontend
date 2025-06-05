@@ -171,6 +171,8 @@ onMounted(async () => {
   () => {questionId.value = route.params.id;window.addEventListener('scroll', handleScroll);}
   await getUserInfo();
   fetchQuesitonInfo();
+
+  window.addEventListener('scroll', handleScroll)
 });
 
 onUnmounted(() => {

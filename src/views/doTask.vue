@@ -97,7 +97,7 @@ import NavBar from '../components/NavBar.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { Star, StarFilled } from '@element-plus/icons-vue'
-import { getUserInfoById, getExerAllinfoById, getExerQuestionById, pushCollectProblem, deleteCollectProblem, getCollectProblem,saveExerciseAnswer,submitExercise } from '../js/api';
+import { getCheckDetail,getUserInfoById, getExerAllinfoById, getExerQuestionById, pushCollectProblem, deleteCollectProblem, getCollectProblem,saveExerciseAnswer,submitExercise } from '../js/api';
 // 格式化日期
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -132,11 +132,13 @@ const maxScoresList = ref([]);
 const typeMap = ['选择', '填空', '简答', '编程'];
 const fetchQuestionList = async () => {
   try {
-    const response = await getExerQuestionById(route.params.id);
+    //const response = await getExerQuestionById(route.params.id);
+    const response = await getCheckDetail(route.params.id,localStorage.getItem('userId'));
     console.log('获取题目列表:', response);
-    questionList.value = response || [];
-    studentAnswers.value = new Array(questionList.value.length).fill("");
-    maxScoresList.value = questionList.value.map(q => q.score);
+    questionList.value = response[0] || [];
+    console.log('题目列表:', questionList.value);
+    studentAnswers.value = response[4] || [];
+    maxScoresList.value = response[5] || [];
   } catch (error) {
     ElMessage.error('获取题目列表失败');
     console.error('获取题目列表失败:', error);
@@ -145,6 +147,7 @@ const fetchQuestionList = async () => {
 const submitTask = async () => {
   try {
     console.log('开始提交任务', route.params.id, userId);
+    await saveExerciseAnswer(route.params.id,userId,studentAnswers);
     const response = await submitExercise(route.params.id,userId);
     ElMessage.success('任务提交成功');
     router.back();

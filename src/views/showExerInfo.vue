@@ -65,7 +65,7 @@
   </template>
   
   <script setup>
-  import { ref, onMounted, computed } from 'vue';
+  import { ref, onMounted, computed, onUnmounted } from 'vue';
   import NavBar from '../components/NavBar.vue';
   import { useRoute, useRouter } from 'vue-router';
   import { ElMessage } from 'element-plus';
@@ -123,6 +123,11 @@
     await getUserInfo();
     await fetchExerName();
     await fetchQuestionList();
+
+    window.addEventListener('scroll', handleScroll);
+  });
+  onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll);
   });
   
   const distance = ref('140px');

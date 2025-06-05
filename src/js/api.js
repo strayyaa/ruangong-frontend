@@ -91,6 +91,10 @@ export const sendVerificationCode = async (email) => {
         return res.data
     } catch (error) {
         console.error('验证码发送错误:', error.response || error)
+        ElMessage({
+            type: 'error',
+            message: error.response.data.errorMsg
+        });
         throw new Error(error.response?.data?.message || '验证码发送失败，请稍后重试')
     }
 }
@@ -172,6 +176,10 @@ export const getUserTodolist = async (userId, isTeacher, hasAssistantRole) => {
             return [res.data.data]; // 返回单个列表的数组
         }
     } catch (error) {
+        ElMessage({
+            type:'error',
+            message:error.response.data.errorMsg
+        })
         console.error('获取代办列表失败:', error);
         throw error;
     }
@@ -206,6 +214,10 @@ export const getUserTasks = async (userId, isTeacher, hasAssistantRole) => {
             return [res.data.data]; // 返回单个列表的数组
         }
     } catch (error) {
+        ElMessage({
+            type:'error',
+            message:error.response.data.errorMsg
+        })
         console.error('获取任务列表失败:', error);
         throw error;
     }
@@ -245,6 +257,10 @@ export const getUserQuestions = async (userId, isTeacher, hasAssistantRole) => {
       return [colloctResponse.data.data || [],wrongResponse.data.data[0] || [],[],wrongResponse.data.data[1] || []];
     }
   } catch (error) {
+    ElMessage({
+            type:'error',
+            message:error.response.data.errorMsg
+        })
     console.error('获取题目列表失败:', error);
     throw new Error(error.response?.data?.message || '获取题目列表失败，请稍后重试');
   }
@@ -270,6 +286,10 @@ export const getUnmarkedStudents = async (exer_id) => {
         }
         return res.data;
     } catch (error) {
+        ElMessage({
+            type:'error',
+            message:error.response.data.errorMsg
+        })
         console.error('获取未批改学生列表错误:', error.response || error);
         throw new Error(error.response?.data?.message || '获取未批改学生列表失败，请稍后重试');
     }
@@ -283,6 +303,11 @@ export const getCheckDetail = async (exer_id, user_id) => {
         }
         return res.data.data;
     } catch (error) {
+        // 处理错误
+        ElMessage({
+            type:'error',
+            message:error.response.data.errorMsg
+        })
         console.error('获取批改详情错误:', error.response || error);
         throw new Error(error.response?.data?.message || '获取批改详情失败，请稍后重试');
     }
@@ -299,6 +324,10 @@ export const pushCheckInfo = async (user_id, exer_id, scores, infos) => {
         }
         return res.data.data;
     } catch (error) {
+        ElMessage({
+            type:'error',
+            message:error.response.data.errorMsg
+        })
         console.error('提交批改错误:', error.response || error);
         throw new Error(error.response?.data?.message || '提交批改失败，请稍后重试');
     }
@@ -312,6 +341,10 @@ export const pushWrongQuestion = async(probId,exerId,stuId)=>{
         }
         return res.data.data;
     } catch (error) {
+        ElMessage({
+            type:'error',
+            message:error.response.data.errorMsg
+        })
         console.error('提交错题错误:', error.response || error);
         throw new Error(error.response?.data?.message || '提交错题失败，请稍后重试');
     }
@@ -1041,7 +1074,7 @@ export const generateReportOfTaskOfAssAndTea = async (taskId) => {
         throw new Error(error.response?.data?.message || '生成任务报告失败，请稍后重试');
     }
 }
-export const generateReportOfTaskOfStu = async (taskId,userId)=>{
+export const generateReportOfTaskOfStu = async (userId)=>{
     try {
         const res = await instance.get('/exer/stuReport', {
             params: {

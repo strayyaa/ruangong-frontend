@@ -227,11 +227,7 @@ onMounted(() => {
   color: #fff;
   font-size: 1rem;
 }
-.edit-btn {
-  /* position: absolute; */
-  /* top: 0; */
-  /* right: 0; */
-}
+
 .profile-edit-form {
   margin-top: 16px;
 }

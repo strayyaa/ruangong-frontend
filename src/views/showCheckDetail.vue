@@ -165,7 +165,7 @@ const fetchCheckDetail = async () => {
       comments.value = new Array(questionList.value.length).fill('');
     }
 
-    const hasUncheckedQuestions = ifCheckedList.value.includes(0);
+    const hasUncheckedQuestions = ifCheckedList.value.includes(false);
     if (hasUncheckedQuestions) {
       ElMessage({
         message: '当前任务尚未批改完毕，请等待批改完成后再查看',

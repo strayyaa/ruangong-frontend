@@ -61,12 +61,14 @@ const handleLogin = async () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('userIdentity');
 
-    try {
-        const res = await login(loginForm.account, loginForm.password);
-        router.push('/home');
-    } catch (error) {
-        console.error('登录失败:', error);
-        ElMessage.error('登录失败，请检查输入信息');
+    
+    const res = await login(loginForm.account, loginForm.password);
+
+    if(!res.success){
+      ElMessage.error(res.errorMsg);
+      return;
+    }else{
+      router.push('/home');
     }
 }
 const goRegister = () => {

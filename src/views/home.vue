@@ -53,7 +53,7 @@
             </div>
             <div class="module-actions">
               <el-button v-if="isTeacher" class="create-button" @click="createCourse">创建课程</el-button>
-              <!-- <el-button class="all-button" @click="goToCourses">全部</el-button> -->
+              <el-button class="all-button" @click="goToAllCourse">全校课程</el-button>
             </div>
           </div>
           
@@ -94,8 +94,10 @@
             </div>
             <div class="module-actions">
               <el-button v-if="isTeacher" class="create-button" @click="createTask">创建任务</el-button>
+              <el-button v-if="isStudent" class="create-button" @click="downReport">练习报告</el-button>
             </div>
           </div>
+          
           <div v-if="currentTaskList.length > 0" class="card-list">
             <el-card v-for="task in currentTaskList" :key="task.id" class="card">
               <div class="card-row">
@@ -172,7 +174,7 @@ import { ref, computed, onMounted } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { getUserCourses,getUserInfoById,getUserTodolist,getUserTasks,getUserQuestions} from '../js/api';
+import { getUserCourses,getUserInfoById,getUserTodolist,getUserTasks,getUserQuestions, generateReportOfTaskOfStu} from '../js/api';
 import { it } from 'element-plus/es/locales.mjs';
 
 const router = useRouter();
@@ -240,7 +242,17 @@ const displayTodoTask = computed(() => {
   }
   return [];
 });
-
+const downReport = async () => {
+  console.log('下载练习报告');
+  // 这里可以添加下载报告的逻辑
+  const res = await generateReportOfTaskOfStu(localStorage.getItem('userId'));
+  if (res.success) {
+    window.open(res.data, '_blank'); // 打开新窗口下载报告
+    ElMessage.success('下载练习报告成功');
+  } else {
+    ElMessage.error(res.errorMsg);
+  }
+}
 const goToTaskItem = (task) => {
   console.log('获取到的按钮用户id是',userId);
   const now = new Date();
@@ -312,9 +324,11 @@ const fetchCourses = async () => {
       console.log("是老师");
       teacherCourses.value = response.data[0] || [];
     } else if (isStudent.value) {
+      console.log("response",response.data[1]);
       // 学生身份
-      if (Array.isArray(response.data) && response.data.length === 2) {
+      if (Array.isArray(response.data) && response.data[1].length !==0 ) {
         console.log("是助教");
+      
         // 返回两个列表，说明同时是助教
         studentCourses.value = response.data[0] || [];
         assistantCourses.value = response.data[1] || [];
@@ -416,7 +430,7 @@ const getEmptyDescription = () => {
 // 路由跳转函数
 const goToCourse = (id) => { router.push(`/course/${id}`); };
 const goToQuestion = (id) => { router.push(`/question/${id}`); }; // 跳转到题目详情页面
-
+const goToAllCourse = () => { router.push(`/selectCourseList`); };
 // 创建功能跳转 (仅老师可见)
 const createCourse = () => { router.push('/createCourse'); }; // 假设有创建课程页面
 const createTask = () => { router.push('/createTask'); };   // 假设有创建任务页面

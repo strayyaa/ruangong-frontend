@@ -1,4 +1,12 @@
 <template>
+  <transition name="slide-fade">
+    <div
+      v-if="loading"
+      class="loading-mask"
+      ref="loadingMask"
+    ></div>
+  </transition>
+  <div v-show="!loading">
   <NavBar />
   <div class = "background-layer">
     <h1 :style = "{'margin-top': distance}" class="courseNameTitle" @click="scrollToTop">{{ courseInfo.name }}</h1>
@@ -6,7 +14,8 @@
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">考核方式：{{ courseInfo.assMethod }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学分：{{ courseInfo.score }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学时：{{ courseInfo.time }}</p>
-    <div v-if="status !== null && targetClass">
+    <div v-if="status !==null">
+      <div v-if="status!==1||targetClass!==null">
     <el-button
         v-if = "status == 1"
         class="register-btn"
@@ -24,6 +33,7 @@
         @mouseleave="registerMouseLeave"
         @click="dealWithButtonClick"
     >->添加课程助教/老师</el-button>
+    </div>
       </div>
 
     <el-drawer
@@ -39,7 +49,7 @@
         style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
         @click="drawerChangeAssAndTea">{{ drawerButtonChangeAssandTeaWord }}</el-button>
         <div>
-          <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">搜索{{drawerIsAssistant}}：</span>
+          <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">添加{{drawerIsAssistant}}：</span>
           <el-input
             v-model="drawerSearchTextOfAssAndTea"
             placeholder="搜索信息"
@@ -184,7 +194,7 @@
               </el-card>
             </el-col>
             <el-col :span="6">
-              <el-card class="class-box" @click="drawerOfCreatingClass = true">
+              <el-card class="class-box" v-if="status==0||status==2" @click="drawerOfCreatingClass = true">
                 <div class="color-block" style=" background-color: rgb(30,150,230) "></div>
                 <div class="class-code">添加班级</div>
               </el-card>
@@ -263,7 +273,7 @@
           <el-descriptions 
           v-for="assAndTea in pagedAssAndTea" :key="assAndTea.id" border style="margin-bottom: 2px;" 
           class="descriptions"
-          @click="goToProfile(assAndTea.user_id)">
+          >
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
@@ -294,6 +304,9 @@
                   </span>
                 </div>
               </template>
+              <div class = "descriptions-label">
+                  <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+assAndTea.user_id)">查看用户</el-button>
+              </div>
             </el-descriptions-item>
           </el-descriptions>
           <el-pagination
@@ -404,6 +417,7 @@
       <div style="height: 45vh;"></div>
     </el-tabs>
     
+    </div>
     </div>
 </template>
 
@@ -592,9 +606,9 @@ const allTheTeachers = ref([
 const drawerIsAssistant = ref("助教");
 const drawerButtonChangeAssandTeaWord = computed(() => {
   if(drawerIsAssistant.value == "助教"){
-    return "切换到老师";
+    return "查看老师";
   }else{
-    return "切换到助教";
+    return "查看助教";
   }
 });
 const drawerChangeAssAndTea = () => {
@@ -773,9 +787,9 @@ const sampleTeachers = ref([
 const isAssistant = ref("助教");
 const changeAssandTeaWord = computed(() => {
   if(isAssistant.value == "助教"){
-    return "切换到老师";
+    return "查看老师";
   }else{
-    return "切换到助教";
+    return "查看助教";
   }
 });
 const changeAssAndTea = () => {
@@ -810,7 +824,7 @@ const handlePageChangeOfAssAndTea = (page) => {
   currentPageOfAssAndTea.value = page
 }
 
-const targetClass = ref();
+const targetClass = ref(null);
 const sampleClasses = ref([
   { class_code: 'C101',name:'a班', class_id:0,color: 'rgb(123,29,33)' },
   { class_code: 'C202',name:'b班',class_id:1,color: 'rgb(122,122,180)' }
@@ -1024,7 +1038,11 @@ const goToProfile = (id) => {
   router.push(`/profile/${id}`);
 };
 
+const loading = ref(true);
+const loadingMask = ref(null);
 onMounted(async () => {
+  loading.value = true;
+  try{
   courseId.value = route.params.id;
   console.log(courseId.value);
   // 获取课程信息
@@ -1067,14 +1085,60 @@ onMounted(async () => {
   }
 
   window.addEventListener('scroll', handleScroll)
+  }finally{
+    if (loading.value) {
+      animate(".loading-mask",{
+        width: [ '100vw', '0vw' ],
+        easing: 'easeInOutQuart',
+        duration: 800,
+        complete: () => {
+          loading.value = false;
+        }
+      });
+    } else {
+      loading.value = false;
+    }
+  }
 });
 onUnmounted(() => {
+  loading.value = true;
+  if (loadingMask.value) {
+    // 先把宽度设为0，准备动画
+    loadingMask.value.style.width = '0vw';
+    // 动画展开到100vw
+    animate({
+      targets: loadingMask.value,
+      width: [ '0vw', '100vw' ],
+      easing: 'easeInOutQuart',
+      duration: 800
+      // 不需要complete，页面即将卸载
+    });
+  }
   window.removeEventListener('scroll', handleScroll)
 })
 
 </script>
 
 <style scoped>
+.loading-mask {
+  position: fixed;
+  left: 0; top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(90deg, #414141 0%, #414141 100%);
+  z-index: 9980;
+  transition: width 0.8s cubic-bezier(.77,0,.18,1);
+  pointer-events: all;
+}
+
+/* 可选：淡出动画 */
+.slide-fade-leave-active {
+  transition: opacity 0.5s;
+}
+.slide-fade-leave-to {
+  opacity: 0;
+}
+
 .background-layer {
   position: fixed;
   height: 100vh;
@@ -1121,6 +1185,7 @@ onUnmounted(() => {
   /* transform: scale(1); */
   /* 防止Element UI覆盖 */
   box-shadow: none !important;
+
 }
 
 .tabs-container {
