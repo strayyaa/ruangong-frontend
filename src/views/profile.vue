@@ -126,11 +126,20 @@ const startEdit = () => {
   editUser.value = { ...user }
   editing.value = true
 }
+const formatDate = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+};
 const saveInfo = () => {
   formRef.value.validate((valid) => {
     if (valid) {
-      Object.assign(user, editUser.value)
-      editing.value = false
+      const newUser = { ...editUser.value };
+      newUser.birthday = formatDate(newUser.birthday);
+      Object.assign(user, newUser);
+      editing.value = false;
       ElMessage.success('保存成功')
     }
   })
@@ -311,4 +320,4 @@ onMounted(() => {
   color: #fff;
   font-size: 1.1rem;
 }
-</style> 
+</style>
