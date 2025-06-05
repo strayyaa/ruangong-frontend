@@ -15,8 +15,11 @@
       <el-menu-item index="/courses" class="el-menu-item-trans">我的课程</el-menu-item>
       <el-menu-item index="/tasks" class="el-menu-item-trans">我的任务</el-menu-item>
       <el-menu-item index="/questions" class="el-menu-item-trans">我的题目</el-menu-item>
-      <el-menu-item :index="`/profile/${userId}`" class="el-menu-item-trans">个人界面</el-menu-item>
-      <el-text size="large" style="margin-top: -4px;font-weight: 700;" class="el-text">{{ user.name }} {{ identity }}，你好！</el-text>
+      <el-text size="large" style="margin-top: -4px;font-weight: 700;" class="el-text">
+        <el-link type="primary" @click="goToProfile" style="cursor:pointer; color:inherit; text-decoration:none;">
+          {{ user.name }} {{ identity }}，你好！
+        </el-link>
+      </el-text>
     </el-menu>
   </div>
 </template>
@@ -46,7 +49,8 @@ onMounted(async () => {
     }
     
     identity.value = localStorage.getItem('userIdentity') == 0 ? "老师" : "同学";
-    const userInfo = await getUserInfoById(userId.value);
+    console.log('用户的id',userId);
+    const userInfo = await getUserInfoById(localStorage.getItem('userId'));
     if (userInfo) {
       user.value = userInfo;
       if (userInfo.identity == 0) {
@@ -59,6 +63,16 @@ onMounted(async () => {
     user.value = { name: '未知用户', identity: 1 };
   }
 })
+
+const goToProfile = () => {
+  const userId = localStorage.getItem('userId');
+  if (userId) {
+    router.push(`/profile/${userId}`);
+  } else {
+    // 没有userId时跳转到登录页
+    router.push('/login');
+  }
+}
 </script>
 
 <style scoped>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import test from "../views/test.vue";
 import homepage from '../views/homepage.vue';
 import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
+import { pa } from 'element-plus/es/locales.mjs';
 
 const routes = [
     {
@@ -10,7 +11,7 @@ const routes = [
         component:homepage,
     },
     {
-        path:'/profile',
+        path:'/profile/:id',
         name:'profile',
         component:() => import('../views/profile.vue'),
     },
@@ -70,7 +71,7 @@ const routes = [
         component: () => import('../views/doTask.vue')
     },
     {
-        path:'/checkTask/:id',
+        path:'/checkTask/:exer_id/:user_id',
         name:'CheckTask',
         component: () => import('../views/checkTask.vue')
     },
@@ -88,6 +89,26 @@ const routes = [
         path:'/createTask',
         name:'CreateTask',
         component: () => import('../views/createTask.vue')
+    },
+    {
+        path:'/checkTaskList/:id',
+        name:'CheckTaskList',
+        component:()=> import('../views/checkTaskList.vue')
+    },
+    {
+        path:'/selectCourseList',
+        name:'SelectCourseList',
+        component:()=> import('../views/selectCourseList.vue')
+    },
+    {
+        path:'/showCheckDetail/:exer_id/:user_id',
+        name:'ShowCheckDetail',
+        component:()=> import('../views/showCheckDetail.vue')
+    },
+    {
+        path:'/showExerInfo/:exer_id',
+        name:'ShowExerInfo',
+        component:()=> import('../views/showExerInfo.vue')
     }
 ]
 
@@ -96,14 +117,25 @@ const router = createRouter({
     history:createWebHistory(),
 });
 
+// 白名单路由
+const whiteList = ['/', '/login', '/register', '/test43906']
+
 // 路由守卫
-// router.beforeEach((to,from,next) => {
-//     const userId = localStorage.getItem('userId');
-//     if(!userId && to.path !== '/login' && to.path !== '/' && to.path !== '/test43906'){
-//         next({path:'/'})
-//     }else{
-//         next();
-//     }
-// });
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token')
+    
+    // 无论是否有token，都允许访问白名单页面
+    if (whiteList.includes(to.path)) {
+        next();
+    } else {
+        // 如果没有token且访问的不是白名单页面，则重定向到登录页
+        if (!token) {
+            next('/login');
+        } else {
+            // 如果有token且访问的不是白名单页面，则正常跳转
+            next();
+        }
+    }
+})
 
 export default router;

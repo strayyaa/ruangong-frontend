@@ -723,7 +723,16 @@ const judgeStatus = async () => {
   const cid = Number(courseId.value);
 
   console.log("当前用户ID:"+userId);
-  userAllCourses.value = await getUserCourses(userId);
+  const res = await getUserCourses(userId);
+  if (!res.success) {
+    ElMessage({
+      message: '获取用户课程失败',
+      type: 'error',
+      duration: 2000
+    });
+    return;
+  }
+  userAllCourses.value = res.data;
   console.log("用户所属所有课程:", userAllCourses.value);
 
   if (rawStatus === 0) {

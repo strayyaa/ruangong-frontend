@@ -1,7 +1,7 @@
 <template>
   <NavBar />
   <div class="background-layer">
-    <h1 :style="{ 'margin-top': distance }" class="taskTitle" @click="scrollToTop">{{ exer.name }}（批改）</h1>
+    <h1 :style="{ 'margin-top': distance }" class="taskTitle" @click="scrollToTop">{{ exer.name }}（批改反馈）</h1>
     <p :style="{ opacity: contentOpacity }" class="taskInfoContent">学生：{{ studentInfo.name }}（ID: {{ studentInfo.id }}）</p>
     <p :style="{ opacity: contentOpacity }" class="totalScore">总分：{{ totalMaxScore }}分</p>
   </div>
@@ -10,7 +10,17 @@
     <div v-for="(question, index) in questionList" :key="question.id" class="question-card">
       <div class="question-header">
         <h2>题目 {{ index + 1 }}</h2>
-        <span class="score-label">总分：{{ maxScoresList[index] }}分</span>
+        <div class="header-right">
+          <span class="score-label">总分：{{ maxScoresList[index] }}分</span>
+          <el-button
+            class="star-button"
+            :class="{ 'is-collected': isCollected(question.prob_id) }"
+            @click="toggleCollect(question.prob_id)"
+          >
+            <el-icon v-if="isCollected(question.prob_id)"><StarFilled /></el-icon>
+            <el-icon v-else><Star /></el-icon>
+          </el-button>
+        </div>
       </div>
       <div class="question-content">
         <h3>{{ question.description }}</h3>
@@ -48,7 +58,7 @@
             class="answer-input"
             readonly
           />
-          <div class="manual-score">
+          <!-- <div class="manual-score">
             <el-input-number
               v-model="scoreList[index]"
               :min="0"
@@ -58,7 +68,8 @@
               class="score-input"
             />
             <span style="margin-left:10px; color:#c5c5c5;">/ {{ maxScoresList[index] }}分</span>
-          </div>
+          </div> -->
+          <div class="auto-score">得分：{{ scoreList[index] }}分 <span v-if="scoreList[index] < maxScoresList[index]" style="color:#ffd04b">（错误，正确答案：{{ question.answer }}）</span></div>
         </template>
         <!-- 评语输入框 -->
         <div class="comment-section">
@@ -66,20 +77,12 @@
             v-model="comments[index]"
             type="textarea"
             :rows="2"
-            placeholder="请输入评语"
+            placeholder="当前暂无评语"
             class="comment-input"
+            readonly
           />
         </div>
       </div>
-    </div>
-    <div class="submit-section">
-      <el-button 
-        type="primary" 
-        size="large"
-        @click="submitCheck"
-      >
-        提交批改
-      </el-button>
     </div>
     <div class="floating-score">
       当前总分：{{ totalScore }}
@@ -88,11 +91,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { getCheckDetail, getUserInfoById, pushWrongQuestion, pushCheckInfo, getExerAllinfoById } from '../js/api';
+import { Star, StarFilled } from '@element-plus/icons-vue'
+import { getCheckDetail, getUserInfoById, getExerAllinfoById, pushCollectProblem, deleteCollectProblem, getCollectProblem } from '../js/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -132,14 +136,8 @@ const comments = ref([]);
 const maxScoresList = ref([]);
 const ifCheckedList = ref([]);
 const scoreList = ref([]);
-// function getStudentAnswersIndexArray() {
-//   return questionList.value.map((q, idx) => {
-//     if (q.type === 0 && /^[A-D]$/.test(studentAnswers.value[idx])) {
-//       return String("ABCD".indexOf(studentAnswers.value[idx]));
-//     }
-//     return studentAnswers.value[idx];
-//   });
-// }
+const collectedProblems = ref([]);
+
 // 获取批改详情
 const fetchCheckDetail = async () => {
   console.log('开始获取批改任务详情，任务ID:', route.params.exer_id);
@@ -147,8 +145,16 @@ const fetchCheckDetail = async () => {
   console.log('获取批改任务详情结果:', res);
   if (res) {
     questionList.value = res[0] || [];
-    studentAnswers.value = res[4] || [];
-    // getStudentAnswersIndexArray();
+    // 初始化studentAnswers为空列表，长度与questionList一致
+    studentAnswers.value = new Array(questionList.value.length).fill('');
+    // 如果有学生答案，则更新对应位置
+    if (res[4] && res[4].length > 0) {
+      res[4].forEach((answer, index) => {
+        if (index < studentAnswers.value.length) {
+          studentAnswers.value[index] = answer;
+        }
+      });
+    }
     comments.value = res[2] || [];
     maxScoresList.value = res[5] || [];
     ifCheckedList.value = res[3] || [];
@@ -158,52 +164,25 @@ const fetchCheckDetail = async () => {
     if (!comments.value.length) {
       comments.value = new Array(questionList.value.length).fill('');
     }
+
+    const hasUncheckedQuestions = ifCheckedList.value.includes(0);
+    if (hasUncheckedQuestions) {
+      ElMessage({
+        message: '当前任务尚未批改完毕，请等待批改完成后再查看',
+        type: 'warning',
+        duration: 2000
+      });
+      setTimeout(() => {
+        router.back();
+      }, 2000);
+      return;
+    } else {
+      console.log('全部批改完毕');
+    }
     
     console.log('批改任务详情:', res);
   } else {
     ElMessage.error('获取批改任务详情失败');
-  }
-};
-
-// 提交批改
-const submitCheck = async () => {
-  try {
-    // 提交批改信息
-    console.log('开始提交批改信息，用户ID:', route.params.user_id, '练习ID:', route.params.exer_id);
-    console.log('提交的分数列表:', scoreList.value);
-    console.log('提交的评语列表:', comments.value);
-    await pushCheckInfo(route.params.user_id, route.params.exer_id, scoreList.value, comments.value);
-    
-    // 收集错题并提交
-    const wrongQuestions = questionList.value
-      .map((q, idx) => ({
-        id: q.prob_id,
-        score: scoreList.value[idx],
-        maxScore: maxScoresList.value[idx]
-      }))
-      .filter(q => q.score < q.maxScore)
-      .map(q => q.id);  // 取 id，这里就是 prob_id
-
-    // 提交每个错题
-    for (const prob_id of wrongQuestions) {
-
-      try{
-        await pushWrongQuestion(prob_id, route.params.exer_id, route.params.user_id);
-      }catch (error) {
-        continue; // 如果某个错题提交失败，继续处理下一个
-      }
-    }
-    
-    ElMessage({
-      message: '批改提交成功！',
-      type: 'success',
-      duration: 2000
-    });
-    
-    // 返回上一页
-    router.back();
-  } catch (error) {
-    ElMessage.error('批改提交失败：' + error.message);
   }
 };
 
@@ -217,10 +196,46 @@ const totalMaxScore = computed(() => {
   return maxScoresList.value.reduce((sum, score) => sum + (score || 0), 0);
 });
 
+// 获取收藏题目列表
+const fetchCollectedProblems = async () => {
+  try {
+    const res = await getCollectProblem(route.params.user_id);
+    console.log(  '获取收藏题目列表:', res);
+    collectedProblems.value = res || [];
+  } catch (error) {
+    console.error('获取收藏题目列表失败:', error);
+  }
+};
+
+// 判断题目是否已收藏
+const isCollected = (probId) => {
+  return collectedProblems.value.some(problem => problem.prob_id === probId);
+};
+
+// 切换收藏状态
+const toggleCollect = async (probId) => {
+  try {
+    if (isCollected(probId)) {
+      await deleteCollectProblem(probId,route.params.user_id);
+      collectedProblems.value = collectedProblems.value.filter(problem => problem.prob_id !== probId);
+      ElMessage.success('取消收藏成功');
+      console.log("取消收藏后的列表为",collectedProblems.value);
+    } else {
+      await pushCollectProblem(probId,route.params.user_id);
+      collectedProblems.value.push({ prob_id: probId });
+      ElMessage.success('收藏成功');
+      console.log("添加收藏后的列表为",collectedProblems.value);
+    }
+  } catch (error) {
+    ElMessage.error('操作失败：' + error.message);
+  }
+};
+
 onMounted(async () => {
   await getUserInfo();
   await fetchCheckDetail();
   await fetchExerName();
+  await fetchCollectedProblems();
   fetchStudentInfo();
 });
 
@@ -427,6 +442,33 @@ const scrollToTop = () => {
 :deep(.el-radio.is-checked .option-label) {
   color: #ffd04b !important;
   font-weight: bold;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.star-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #c5c5c5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.star-button:hover {
+  transform: scale(1.1);
+}
+
+.star-button.is-collected {
+  color: #ffd04b;
+}
+
+.star-button i {
+  font-size: 24px;
 }
 
 </style> 

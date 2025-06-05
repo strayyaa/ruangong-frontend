@@ -173,7 +173,11 @@ const courseList = ref([]);
 
 const fetchCourse = async()=>{
   const res = await getUserCourses(localStorage.getItem('userId'));
-  courseList.value = res[0];
+  if(!res.success || res.data.length === 0) {
+    ElMessage.error(res.errorMsg || '未找到课程，请先创建课程');
+    return;
+  }
+  courseList.value = res.data[0];
 }
 const chosenCourse = ref(0);
 const chosenCourseName = ref('未选择课程');
