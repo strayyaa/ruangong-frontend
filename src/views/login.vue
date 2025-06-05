@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container class="login-container">
     <div class="background-layer">
       <h1 class="background-title">
         <span class="toanimate">课</span>
@@ -61,15 +61,13 @@ const handleLogin = async () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('userIdentity');
 
-    
     const res = await login(loginForm.account, loginForm.password);
-
     if(!res.success){
       ElMessage.error(res.errorMsg);
       return;
-    }else{
-      router.push('/home');
     }
+    router.push('/home');
+
 }
 const goRegister = () => {
   router.push('/register')
@@ -118,20 +116,25 @@ onMounted(() => {
   margin: 0 5px;
   position: relative;
 }
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .form-container {
-  max-width: 400px;
-  max-height: 300px;
+  max-width: 500px;
+  max-height: 700px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 60px 48px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  margin-top: 200px;
 }
 .login-form {
+  width: 100%;
   margin-top: 10px;
-  /* margin-bottom: 0px; */
 }
 .submit-btn {
   width: 100%;
@@ -146,6 +149,7 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.1);
   box-shadow: none;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  height: 40px;
 }
 
 :deep(.el-input__inner) {
@@ -155,4 +159,4 @@ onMounted(() => {
 :deep(.el-input__prefix) {
   color: rgba(255, 255, 255, 0.7);
 }
-</style> 
+</style>
