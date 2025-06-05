@@ -117,6 +117,7 @@ export const login = async (account, password) => {
         return res.data
     } catch (error) {
         console.error('登录错误:', error.response || error)
+        
         throw new Error(error.response?.data?.message || '登录失败，请稍后重试')
     }
 }
