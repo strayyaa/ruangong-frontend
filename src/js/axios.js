@@ -10,15 +10,9 @@ import axios from 'axios';
 //     }
 // });
 const instance = axios.create({
-    baseURL: 'http://10.192.53.103:8080',
-<<<<<<< HEAD
-    timeout: 50000, // 设置请求超时时间
-    headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-=======
+    // baseURL: 'http://10.192.53.103:8080',
+    baseURL: 'http://101.42.92.21:8080',
     timeout: 50000
->>>>>>> bee41aad546e10b514df5484a800d24c563d69aa
 });
 
 // 添加请求拦截器

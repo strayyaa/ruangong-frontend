@@ -10,10 +10,10 @@
                 <span class="inputTitle">题目类型</span>
             </template>
           <el-select v-model="questionForm.type" placeholder="请选择题型">
-            <el-option label="选择" value="选择" />
-            <el-option label="填空" value="填空" />
-            <el-option label="简答" value="简答" />
-            <el-option label="编程" value="编程" />
+            <el-option label="选择" :value="0" />
+            <el-option label="填空" :value="1" />
+            <el-option label="简答" :value="2" />
+            <el-option label="编程" :value="3" />
           </el-select>
         </el-form-item>
 
@@ -24,7 +24,7 @@
           <el-input v-model="questionForm.content" type="textarea" :rows="3" />
         </el-form-item>
 
-        <el-form-item v-if="questionForm.type === '选择'">
+        <el-form-item v-if="questionForm.type === 0">
         <template #label>
             <span class="inputTitle">选项</span>
         </template>
@@ -68,6 +68,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { createQuestion } from '../js/api'
+import NavBar from '../components/NavBar.vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
@@ -82,23 +85,38 @@ const questionForm = ref({
   id: Math.floor(Math.random() * 100000), // 模拟题目ID
   creator_id: 1,
 })
-const optionInputs = ref(['', '', '', ''])
+const optionInputs = ref(['', '', '', '']) // 用于存储选项输入
 
-const handleCreate = () => {
-  const fromTaskCreation = route.query.fromTask === 'true'
-  questionForm.value.options = 'A' + optionInputs.value[0] + 'B' + optionInputs.value[1] + 'C' + optionInputs.value[2] + 'D' + optionInputs.value[3]
-
-  if (fromTaskCreation) {
-    // 将完整题目信息带回 /createTask
-    const newQuestion = { ...questionForm.value }
-    router.push({
-      path: '/createTask',
-      query: {
-        newQuestion: JSON.stringify(newQuestion)
+const handleCreate = async () => {
+  if(!questionForm.value.type || !questionForm.value.content || !questionForm.value.answer) {
+    ElMessage.error('请填写完整的题目信息')
+    return
+  }
+  const res = await createQuestion(questionForm.value.type,questionForm.value.public,localStorage.getItem('userId'),questionForm.value.content,optionInputs.value,questionForm.value.answer,questionForm.value.explanation);
+  if(res.success) {
+    ElMessage.success('题目创建成功')
+    // 判断是否是从任务页面跳转过来的
+    if (route.query.fromTask === 'true') {
+      // 将新题目通过路由参数带回
+      localStorage.setItem('newQuestion',JSON.stringify(res.data));
+      router.push('/createTask');
+    } else {
+      // 普通创建题目流程
+      questionForm.value = {
+        type: '',
+        content: '',
+        options: '',
+        public: true,
+        answer: '',
+        explanation: '',
+        id: Math.floor(Math.random() * 100000),
+        creator_id: 1,
       }
-    })
+      optionInputs.value = ['', '', '', '']
+    }
+    optionInputs.value = ['', '', '', ''] // 重置选项输入
   } else {
-    router.push('/questions')
+    ElMessage.error(res.errorMsg);
   }
 }
 </script>

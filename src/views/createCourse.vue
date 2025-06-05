@@ -56,7 +56,7 @@
         </el-form-item>
 
         <el-form-item class="form-item">
-          <el-button type="primary" @click="createCourse" class="inputButton">创建课程</el-button>
+          <el-button type="primary" @click="createCourseFun" class="inputButton">创建课程</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -66,9 +66,10 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getTest } from '../js/api.js'
+import { getTest,createCourse } from '../js/api.js'
 import NavBar from '../components/NavBar.vue'
 import { animate } from 'animejs'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 
@@ -80,13 +81,24 @@ const courseForm = ref({
   credit: 0,
   period: 0,
   // 以下为隐藏字段
-  id: Math.floor(Math.random() * 10000), // 模拟 id，后端生成为准
+  course_id:0, // 模拟 id，后端生成为准
   creator_id: 1, // 模拟 creator_id
 })
 
 // 点击按钮后跳转
-const createCourse = () => {
-  router.push(`/course/${courseForm.value.id}`)
+const createCourseFun = async () => {
+  const res = await createCourse(courseForm.value.name,localStorage.getItem('userId'),courseForm.value.outline, courseForm.value.exam_type, courseForm.value.credit, courseForm.value.period);
+  if(res.success === false) {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+    return;
+  }
+  courseForm.value = res.data;
+  console.log("获取到的创建课程的信息:"+courseForm.value);
+  router.push(`/course/${courseForm.value.course_id}`)
 }
 
 onMounted(() => {

@@ -13,7 +13,7 @@
         @mouseenter="registerMouseEnter"
         @mouseleave="registerMouseLeave"
         @click="dealWithButtonClick"
-    >->进入班级</el-button>
+    >->进入班级{{ targetClass.name }}</el-button>
 
     <el-button
         v-if = "status == 0"
@@ -24,14 +24,6 @@
         @click="dealWithButtonClick"
     >->添加课程助教/老师</el-button>
 
-    <el-button
-        v-if = "status == 3"
-        class="register-btn"
-        :style = "{top: distanceOfButton}"
-        @mouseenter="registerMouseEnter"
-        @mouseleave="registerMouseLeave"
-        @click="dealWithButtonClick"
-    >->选择课程</el-button>
 
     <el-drawer
       title="添加助教/老师"
@@ -39,6 +31,7 @@
       :direction="'rtl'"
       :before-close="(done) => { drawerOfAddAssAndTea = false; done(); }"
       style="z-index: 1001;"
+      :size="'50%'"
       :append-to-body="true">
       <div style="margin-left: 20px;margin-top: 0px;">
         <el-button 
@@ -57,15 +50,15 @@
           <div class="card-row">
             <!-- 左侧内容 -->
             <div class="card-info">
-              <span class="drawer-card-word">{{ assAndTea.id }}</span>
+              <span class="drawer-card-word">{{ assAndTea.user_id }}</span>
               <span class="drawer-card-word">{{ assAndTea.username }}</span>
               <span class="drawer-card-word">{{ assAndTea.name }}</span>
-              <span class="drawer-card-word">{{ assAndTea.email }}</span>
+              <span class="drawer-card-word">{{ assAndTea.mail }}</span>
             </div>
 
             <!-- 右侧按钮 -->
             <div class="card-actions">
-              <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddAssAndTea(assAndTea.id)">添加</span></el-button>
+              <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddAssAndTea(assAndTea.username)">添加</span></el-button>
             </div>
           </div>
         </el-card>
@@ -75,7 +68,7 @@
           :total="drawerFilteredAssAndTea.length"
           :page-size="pageSize"
           :current-page="drawerCurrentPageOfAssAndTea"
-          @current-change="handlePageChangeOfAssAndTea"
+          @current-change="handleDrawerPageChangeOfAssAndTea"
           style="margin-top: 20px; text-align: center;">
         </el-pagination>
       </div>
@@ -137,12 +130,11 @@
 
           <el-descriptions 
           v-for="student in pagedStudents" :key="student.id" border style="margin-bottom: 2px;" 
-          class="descriptions"
-          @click="goToProfile(student.id)">
+          class="descriptions">
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  {{ student.id }}
+                  {{ student.user_id }}
                 </div>
               </template>
               <div class="descriptions-content">
@@ -156,7 +148,7 @@
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ student.email }}
+                {{ student.mail }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -165,7 +157,8 @@
                   {{ student.class }}
                 </div>
               </template>
-              <div class="descriptions-content">
+              <div class = "descriptions-label">
+                  <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+student.user_id)">查看学生</el-button>
               </div>
             </el-descriptions-item>
           </el-descriptions>
@@ -184,15 +177,15 @@
         <template v-else-if="tab === '班级'">
           <el-row :gutter="20">
             <el-col :span="6" v-for="cls in sampleClasses" :key="cls.code">
-              <el-card class="class-box" @click="router.push('/class/' + cls.id)">
+              <el-card class="class-box" @click="router.push('/class/' + cls.class_id)">
                 <div class="color-block" :style="{ backgroundColor: cls.color }"></div>
-                <div class="class-code">{{ cls.code }}-{{ cls.name }}</div>
+                <div class="class-code">{{ cls.class_code }}-{{ cls.name }}</div>
               </el-card>
             </el-col>
             <el-col :span="6">
               <el-card class="class-box" @click="drawerOfCreatingClass = true">
                 <div class="color-block" style=" background-color: rgb(30,150,230) "></div>
-                <div class="class-code">添加课程</div>
+                <div class="class-code">添加班级</div>
               </el-card>
             </el-col>
           </el-row>
@@ -269,11 +262,11 @@
           <el-descriptions 
           v-for="assAndTea in pagedAssAndTea" :key="assAndTea.id" border style="margin-bottom: 2px;" 
           class="descriptions"
-          @click="goToProfile(assAndTea.id)">
+          @click="goToProfile(assAndTea.user_id)">
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  {{ assAndTea.id }}
+                  {{ assAndTea.user_id }}
                 </div>
               </template>
               <div class="descriptions-content">
@@ -287,7 +280,7 @@
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ assAndTea.email }}
+                {{ assAndTea.mail }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -317,7 +310,7 @@
         <template v-else-if="tab === '资源'">
           <el-checkbox-group v-model="selectedTags" class="tag-selector">
             <el-checkbox v-for="tag in allTags" :label="tag" :key="tag">
-              <span style="font-size: 1.5rem;font-weight: bold;">{{ tag }}</span>
+              <span style="font-size: 1.5rem;font-weight: bold;">{{ tag.name }}</span>
             </el-checkbox>
           </el-checkbox-group>
 
@@ -333,19 +326,24 @@
             <div class="card-row">
               <!-- 左侧内容 -->
               <div class="card-info">
-                <span class="cardWord">{{ res.code }}</span>
+                <span class="cardWord">{{ res.res_code }}</span>
                 <span class="cardWord">{{ res.name }}</span>
-                <span class="cardWord">{{ res.public ? '是' : '否' }}</span>
+                <span class="cardWord">{{ res.process_id===-1 ? '是' : '否' }}</span>
                 <span class="cardWord">{{ res.type }}</span>
-                <span class="cardWord">{{ res.date }}</span>
-                <span class="cardWord">{{ res.tag }}</span>
+                <span class="cardWord">{{ res.date.split('T')[0] }}</span>
+                <span class="cardWord">
+                  <template v-for="(tagIdx, idx) in String(res.tag).split(',')" :key="tagIdx">
+                    {{ allTagsWhenCreate[Number(tagIdx)]?.name || allTagsWhenCreate[Number(tagIdx)] }}
+                    <span v-if="idx !== String(res.tag).split(',').length - 1">, </span>
+                  </template>
+                </span>
               </div>
 
               <!-- 右侧按钮 -->
               <div class="card-actions">
-                <el-button class="cardButton"><span style="margin-top: 14px;" @click="searchHistory(res.code)">查询历史</span></el-button>
-                <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.id)">预览</span></el-button>
-                <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.id)">下载</span></el-button>
+                <el-button class="cardButton"><span style="margin-top: 14px;" @click="searchHistory(res.res_id)">查询历史</span></el-button>
+                <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.url)">预览</span></el-button>
+                <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.res_id)">下载</span></el-button>
               </div>
             </div>
           </el-card>
@@ -379,18 +377,23 @@
               <div class="card-row">
                 <!-- 左侧内容 -->
                 <div class="card-info">
-                  <span class="cardWord">{{ res.code }}</span>
+                  <span class="cardWord">{{ res.res_code }}</span>
                   <span class="cardWord">{{ res.name }}</span>
-                  <span class="cardWord">{{ res.public ? '是' : '否' }}</span>
+                  <span class="cardWord">{{ res.process_id===-1 ? '是' : '否' }}</span>
                   <span class="cardWord">{{ res.type }}</span>
-                  <span class="cardWord">{{ res.date }}</span>
-                  <span class="cardWord">{{ res.tag }}</span>
+                  <span class="cardWord">{{ res.date.split('T')[0] }}</span>
+                  <span class="cardWord">
+                  <template v-for="(tagIdx, idx) in String(res.tag).split(',')" :key="tagIdx">
+                    {{ allTagsWhenCreate[Number(tagIdx)]?.name || allTagsWhenCreate[Number(tagIdx)] }}
+                    <span v-if="idx !== String(res.tag).split(',').length - 1">, </span>
+                  </template>
+                </span>
                 </div>
 
                 <!-- 右侧按钮 -->
                 <div class="card-actions">
-                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.id)">预览</span></el-button>
-                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.id)">下载</span></el-button>
+                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.url)">预览</span></el-button>
+                  <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.res_id)">下载</span></el-button>
                 </div>
               </div>
             </el-card>
@@ -408,14 +411,55 @@ import { ref, onMounted, onUnmounted,computed } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute } from 'vue-router';
 import router from '../router';
-import { getCourseInfoById,createClass, getClassListByCourseId } from '../js/api.js';
+import { getCourseInfoById,createClass, getClassListByCourseId, getUserCourses,getAllClassListByCourseId, getStudentListByClassId,fetchAllStudents, fetchAllTeachers, addAssAndTeaToCourse, getTeacherListByCourseId, getProcessesByClassId, getResourcesByProcessId, getAllTags, downloadResource, getClassOfAssAndTeaOfCourse, getHistoryByResourceId } from '../js/api.js';
 import { animate } from 'animejs'
 import { ElMessage } from 'element-plus';
+import { lo } from 'element-plus/es/locales.mjs';
+import { all } from 'axios';
+import { Base64 } from 'js-base64';
+
 
 const route = useRoute();
 const courseId = ref(0);
 const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
-const belongingClass = ref(0); // 学生在该课程的班级
+const userAllCourses = ref([]);
+const judgeStatus = async () => {
+  const userId = localStorage.getItem('userId');
+  const rawStatus = Number(localStorage.getItem('userIdentity')); // 原始身份
+  courseId.value = route.params.id; // 确保courseId已赋值
+  const cid = Number(courseId.value);
+
+  console.log("当前用户ID:"+userId);
+  userAllCourses.value = await getUserCourses(userId);
+  console.log("用户所属所有课程:", userAllCourses.value);
+
+  if (rawStatus === 0) {
+    // 老师
+    // userAllCourses.value 是课程id数组
+    const courseList = userAllCourses.value[0];
+    if (courseList && courseList.some(c => c.course_id === cid)) {
+      status.value = 0; // 老师且与该课有关
+    } else {
+      status.value = 4; // 老师但与该课无关
+    }
+  } else if (rawStatus === 1) {
+    // 学生
+    // userAllCourses.value 是 [学生课程列表, 助教课程列表]
+    const [studentCourses, assistantCourses] = userAllCourses.value;
+    const inStudent = studentCourses && studentCourses.some(c => c.course_id === cid);
+    const inAssistant = assistantCourses && assistantCourses.some(c => c.course_id === cid);
+    if (inStudent) {
+      status.value = 1; // 学生
+    } else if (inAssistant) {
+      status.value = 2; // 助教
+    } else {
+      status.value = 3; // 学生未选课
+    }
+  }
+  // 测试用
+  // status.value = 0;
+  console.log("身份状态:", status.value);
+}
 
 const distance = ref('140px');
 const distanceOfButton = ref('630px');
@@ -448,7 +492,7 @@ const courseInfo = ref({
   course_id: 0,
   name: '计算机组成原理',
   creator_id: 0,
-  syllabus: '主要讲解CPU与内存的交互原理、指令流水线等内容。长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-',
+  syllabus: '主要讲解CPU与内存的交互原理、指令流水线等内容。长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-长度测试-',
   assMethod: '闭卷 + 实验报告',
   score: 3,
   time: 48
@@ -498,6 +542,31 @@ const imgMouseLeave = (str) => {
 
 const drawerOfAddAssAndTea = ref(false);
 const drawerSearchTextOfAssAndTea = ref('');
+
+const getAllTheStudents = async () => {
+  const res = await fetchAllStudents();
+  if (res.success) {
+    allTheStudents.value = res.data;
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+};
+const getAllTheTeachers = async()=>{
+  const res = await fetchAllTeachers();
+  if (res.success) {
+    allTheTeachers.value = res.data;
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
 const allTheStudents = ref([
   { id: 101, username: 'stuA', name: '张三', email: 'zs@mail.com' },
   { id: 102, username: 'stuB', name: '李四', email: 'ls@mail.com'},
@@ -541,11 +610,25 @@ const drawerFilteredAssAndTea = computed(() => {
     })
 })
 const drawerCurrentPageOfAssAndTea = ref(1)
+const handleDrawerPageChangeOfAssAndTea = (page) => {
+  drawerCurrentPageOfAssAndTea.value = page
+}
 const drawerPagedAssAndTea = computed(() => {
   const start = (drawerCurrentPageOfAssAndTea.value - 1) * pageSize
   return drawerFilteredAssAndTea.value.slice(start, start + pageSize)
 })
-const drawerAddAssAndTea = (id) => {
+const drawerAddAssAndTea = async (username) => {
+  const res = await addAssAndTeaToCourse(username,courseId.value);
+  if(res.success === false) {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+    return;
+  }
+  drawerOfAddAssAndTea.value = false;
+  await getCourseTeachers();
   ElMessage({
     message: '添加成功',
     type: 'success',
@@ -553,10 +636,10 @@ const drawerAddAssAndTea = (id) => {
   });
 }
 
-//待完成
+
 const dealWithButtonClick = () => {
   if(status.value == 1){
-
+    router.push('/class/' + targetClass.value.class_id);
   }
   if(status.value == 0){
     drawerOfAddAssAndTea.value = true;
@@ -566,13 +649,13 @@ const dealWithButtonClick = () => {
 
 const navItems = computed(() => {
   if(status.value == 1){
-    return ['助教/老师','资源'];
+    return ['班级','助教/老师','资源'];
   }
-  if(status.value == 0||status.value == 2||status.value == 4){
+  if(status.value == 0||status.value == 2){
     return ['学生', '班级', '助教/老师', '资源'];
   }
-  if(status.value == 3){
-    return ['助教/老师'];
+  if(status.value == 3||status.value == 4){
+    return ['班级','助教/老师'];
   }
 });
 
@@ -589,6 +672,23 @@ const sampleStudents = ref([
   { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102'},
   { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102'},
 ]);
+const getStudentsOfCourse = async ()=>{
+  sampleStudents.value = [];
+  for(let i=0;i<sampleClasses.value.length;i++){
+    const res = await getStudentListByClassId(courseId.value,sampleClasses.value[i].class_id,localStorage.getItem('userId'));
+    sampleStudents.value = sampleStudents.value.concat(res.data);
+  }
+  console.log("获取到的学生列表:",sampleStudents.value);
+  for(let i=0;i<sampleStudents.value.length;i++){
+    const res = await getClassListByCourseId(courseId.value,sampleStudents.value[i].user_id);
+    if (res.success) {
+      sampleStudents.value[i].class = res.data[0].name;
+    } else {
+      sampleStudents.value[i].class = '无';
+    }
+  }
+}
+
 const filteredStudents = computed(() => {
   const keyword = searchText.value.trim().toLowerCase()
 
@@ -618,13 +718,46 @@ const handlePageChange = (page) => {
   currentPage.value = page
 }
 
+const getClassOfAssAndTea = async(user)=>{
+  const res2 = await getClassOfAssAndTeaOfCourse(courseId.value,user.user_id);
+  if (res2.success) {
+    user.classes = res2.data.map(cls => cls.name);
+  } else {
+    user.classes = [];
+  }
+  if (user.identity === 0) {
+    sampleTeachers.value.push(user);
+  } else if (user.identity === 1) {
+    sampleAssistants.value.push(user);
+  }
+}
+
+const getCourseTeachers = async () => {
+  const res = await getTeacherListByCourseId(courseId.value);
+  if (res.success) {
+    // 清空原有数据
+    sampleTeachers.value = [];
+    sampleAssistants.value = [];
+    // 遍历并分类
+    for(const user of res.data) {
+      await getClassOfAssAndTea(user);
+    }
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
+
 const sampleAssistants = ref([
-  { id: 201, username: 'taA', name: '王五', email: 'ww@mail.com',classes:['C101','C102'] },
-  { id: 201, username: 'taA', name: '王五', email: 'ww@mail.com',classes:[] }
+  { id: 201, username: 'taA', name: '王五', mail: 'ww@mail.com',classes:['C101','C102'] },
+  { id: 201, username: 'taA', name: '王五', mail: 'ww@mail.com',classes:[] }
 ]);
 
 const sampleTeachers = ref([
-  { id: 301, username: 'tchA', name: '赵六', email: 'zl@mail.com',classes:['C101','C102'] }
+  { id: 301, username: 'tchA', name: '赵六', mail: 'zl@mail.com',classes:['C101','C102'] }
 ]);
 
 const isAssistant = ref("助教");
@@ -667,13 +800,18 @@ const handlePageChangeOfAssAndTea = (page) => {
   currentPageOfAssAndTea.value = page
 }
 
-
+const targetClass = ref();
 const sampleClasses = ref([
   { class_code: 'C101',name:'a班', class_id:0,color: 'rgb(123,29,33)' },
   { class_code: 'C202',name:'b班',class_id:1,color: 'rgb(122,122,180)' }
 ]);
 const getClass = async (id) => {
-  const res = await getClassListByCourseId(id);
+  const res = await getClassListByCourseId(id,localStorage.getItem('userId'));
+  console.log(res);
+  return res.data;
+};
+const getAllClasses = async (id) => {
+  const res = await getAllClassListByCourseId(id,localStorage.getItem('userId'));
   console.log(res);
   return res;
 };
@@ -690,14 +828,15 @@ const createClassForm = ref({
 //创建班级
 const createClassSubmit = async () => {
   drawerOfCreatingClass.value = false;
+  createClassForm.value = await createClass(courseInfo.value.course_id,createClassForm.value.name);
+  createClassForm.value.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
+  sampleClasses.value.push(createClassForm.value);
+  console.log(createClassForm.value);
   ElMessage({
     message: '班级创建成功'+createClassForm.value.name,
     type: 'success',
     duration: 2000
   });
-  createClassForm.value = await createClass(courseInfo.value.course_id,createClassForm.value.name);
-  createClassForm.value.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
-  sampleClasses.value.push(createClassForm.value);
   createClassForm.value = {
     code:'',
     name: '',
@@ -706,20 +845,95 @@ const createClassSubmit = async () => {
   };
 };
 
-const allTags = ['讲义', '作业', '实验', '通知'];
-const selectedTags = ref(['讲义', '作业', '实验', '通知']);
+const fetchAllTags = async () => {
+  const res = await getAllTags();
+  if (res.success) {
+    allTagsWhenCreate.value = res.data;
+    selectedTags.value = res.data; // 默认选中所有标签
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+};
 
+const allTags = ref([]);
+const selectedTags = ref(['讲义', '作业', '实验', '通知']);
+const allTagsWhenCreate = ref([]);
+
+const fetchAllResources = async ()=>{
+  sampleResources.value = [];
+  for(let i=0;i<sampleClasses.value.length;i++){
+    const res = await getProcessesByClassId(courseId.value,sampleClasses.value[i].class_id);
+    if(res.success){
+      
+    }else{
+      ElMessage({
+        message: res.errorMsg,
+        type: 'error',
+        duration: 2000
+      });
+      return;
+    }
+    const allTheProcesses = res.data;
+    if(allTheProcesses.length == 0){
+      continue;
+    }
+    // 遍历所有的流程，获取每个流程下的资源
+    for(let j=0;j<allTheProcesses.length;j++){
+      const res2 = await getResourcesByProcessId(courseId.value,allTheProcesses[j].process_id);
+      if(res2.success){
+        sampleResources.value = sampleResources.value.concat(res2.data);
+      }else{
+        ElMessage({
+          message: res2.errorMsg,
+          type: 'error',
+          duration: 2000
+        });
+      }
+    }
+  }
+  const res2 = await getResourcesByProcessId(courseId.value,-1);
+  if(res2.success){
+    sampleResources.value = sampleResources.value.concat(res2.data);
+  }else{
+    ElMessage({
+      message: res2.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+  for(let i=0;i<sampleResources.value.length;i++){
+    const tagIndexes = String(sampleResources.value[i].tag).split(',').map(s => s.trim());
+    tagIndexes.forEach(idx => {
+      const tagName = allTagsWhenCreate.value[Number(idx)];
+      if (tagName && !allTags.value.includes(tagName)) {
+        allTags.value.push(tagName);
+      }
+    });
+  }
+  console.log("获取到的资源列表:",sampleResources.value);
+}
 const sampleResources = ref([
-  { id:0,url:"",code: 'R001', name: '实验一', public: true, type: 'PDF', date: '2025-05-01', tag: '实验' },
-  { id:0,url:"",code: 'R002', name: '课程通知', public: false, type: 'DOCX', date: '2025-04-28', tag: '通知' },
-  { id:0,url:"",code: 'R003', name: '作业一', public: true, type: 'PDF', date: '2025-05-03', tag: '作业' },
-  { id:0,url:"",code: 'R003', name: '作业一', public: true, type: 'PDF', date: '2025-05-03', tag: '作业' },
-  { id:0,url:"",code: 'R003', name: '作业一', public: true, type: 'PDF', date: '2025-05-03', tag: '作业' },
-  { id:0,url:"",code: 'R003', name: '作业一', public: true, type: 'PDF', date: '2025-05-03', tag: '作业' }
+  { res_id:0,url:"",res_code: 'R001', name: '实验一', process_id: 0, type: 'PDF', date: '2025-05-01', tag: '实验' },
+  { res_id:0,url:"",res_code: 'R002', name: '课程通知', process_id: false, type: 'DOCX', date: '2025-04-28', tag: '通知' },
+  { res_id:0,url:"",res_code: 'R003', name: '作业一', process_id: true, type: 'PDF', date: '2025-05-03', tag: '作业' },
+  { res_id:0,url:"",res_code: 'R003', name: '作业一', process_id: true, type: 'PDF', date: '2025-05-03', tag: '作业' },
+  { res_id:0,url:"",res_code: 'R003', name: '作业一', process_id: true, type: 'PDF', date: '2025-05-03', tag: '作业' },
+  { res_id:0,url:"",res_code: 'R003', name: '作业一', process_id: true, type: 'PDF', date: '2025-05-03', tag: '作业' }
 ]);
 
 const filteredResources = computed(() =>
-  sampleResources.value.filter((r) => selectedTags.value.includes(r.tag))
+  sampleResources.value.filter((r) => {
+    const tagIndexes = String(r.tag).split(',').map(s => s.trim());
+    // 只要有一个 tag 被选中就显示
+    return (
+      selectedTags.value.length === 0 ||
+      tagIndexes.some(idx => selectedTags.value.includes(allTagsWhenCreate.value[Number(idx)]))
+    );
+  }).sort((a, b) => new Date(b.date) - new Date(a.date))
 );
 const currentPageOfRes = ref(1);
 const pagedResources = computed(() => {
@@ -737,13 +951,34 @@ const historyResources = ref([
 ]);
 
 const drawerOfSearchHistory = ref(false);
-const searchHistory = (code) => {
+const searchHistory = async (id) => {
   drawerOfSearchHistory.value = true;
+  console.log("查询资源历史，资源ID:", id);
+  const res = await getHistoryByResourceId(id);
+  if (res.success) {
+    historyResources.value = res.data;
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
 }
-const previewRes = (id) => {
-  
+const previewRes = (url) => {
+  window.open('http://101.42.92.21:8012/onlinePreview?url='+encodeURIComponent(Base64.encode(url)));
 };
-const downloadRes = (id) => {
+const downloadRes = async (id) => {
+  const res = await downloadResource(id);
+  if (!res.success) {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+    return;
+  }
+  window.open(res.data);
   ElMessage({
     message: '下载成功',
     type: 'success',
@@ -756,17 +991,46 @@ const goToProfile = (id) => {
   router.push(`/profile/${id}`);
 };
 
-onMounted(() => {
+onMounted(async () => {
   courseId.value = route.params.id;
-  getCourse(courseId.value).then((res) => {
-    courseInfo.value = res;
+  console.log(courseId.value);
+  // 获取课程信息
+  await getCourse(courseId.value).then((res) => {
+    courseInfo.value = res.data;
+    console.log(courseInfo.value);
   });
-  getClass(courseId.value).then((res) => {
-    sampleClasses.value = res;
+  // 获取用户状态
+  judgeStatus();
+
+  // 获取课程下的班级列表
+  await getAllClasses(courseId.value).then((res) => {
+    sampleClasses.value = res.data;
     for (let i = 0; i < sampleClasses.value.length; i++) {
       sampleClasses.value[i].color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
     }
   });
+  
+  // 学生：获取自己所属班级
+  if(status.value == 1){
+    await getClass(courseId.value).then((res) => {
+      targetClass.value = res.data[0];
+    });
+  }
+  // 助教/老师：获取课程所有学生;获得所有学生列表（添加助教);获取所有老师列表（添加老师）
+  if(status.value == 0||status.value == 2){
+    await getStudentsOfCourse();
+    await getAllTheStudents();
+    await getAllTheTeachers();
+  }
+
+  // 所有用户：查看该课程的助教和老师
+  await getCourseTeachers();
+  
+  if(status.value != 3 && status.value != 4){
+    // 获取课程下的所有资源
+    await fetchAllTags();
+    await fetchAllResources();
+  }
 
   window.addEventListener('scroll', handleScroll)
 });
@@ -787,7 +1051,7 @@ onUnmounted(() => {
   margin-top: -80px;
   margin-left: -8px;
   background-position: center;
-  z-index: -1;
+  z-index: 1;
 }
 .courseNameTitle {
   position: relative;
@@ -906,20 +1170,20 @@ onUnmounted(() => {
   margin-bottom: 5px;
 }
 .cardWord{
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: bold;
   margin-left: 20px;
   margin-right: 10px; 
   display: inline-block;
-  width: 140px;
+  width: 180px;
 }
 .drawer-card-word{
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: bold;
   margin-left: 20px;
   margin-right: 10px; 
   display: inline-block;
-  width: 40px;
+  width: 60px;
 }
 .cardButton{
   margin-top: -50px;

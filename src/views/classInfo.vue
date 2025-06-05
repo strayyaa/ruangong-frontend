@@ -5,13 +5,22 @@
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">班级代码：{{ classInfo.class_code }}</p>
 
     <el-button
+        v-if = "status != 3"
         class="register-btn"
         :style = "{top: distanceOfButton}"
         @mouseenter="registerMouseEnter"
         @mouseleave="registerMouseLeave"
-        @click="router.push('/course/' + classInfo.course_id)"
+        @click="router.push('/course/'+classInfo.course_id)"
     >->返回课程详情页</el-button>
-
+    <el-button
+        v-if = "status === 3"
+        class="register-btn"
+        :style = "{top: distanceOfButton}"
+        @mouseenter="registerMouseEnter"
+        @mouseleave="registerMouseLeave"
+        @click="chooseClass"
+    >选择课程</el-button>
+    
   </div>
 
   <div class="tabs-container">
@@ -33,7 +42,15 @@
             />
             <el-button 
             style="margin-left: 30px;margin-right: 20px;margin-top: -17px;scale: 1.2;font-size: 1rem;font-weight: bold;">
-            <el-upload style="margin-top: 10px;">使用文件导入学生信息</el-upload></el-button>
+            <el-upload style=""
+            action="http://101.42.92.21:8080/class/addFile"
+            :headers="uploadHeaders"
+            :data="uploadData"
+            name="file"
+            :show-file-list="false"
+            :on-success="handleUploadSuccess"
+            :on-error="handleUploadError"
+            >使用文件导入学生信息</el-upload></el-button>
             <el-button 
             style="margin-left: 30px;margin-right: 20px;margin-top: -17px;scale: 1.2;font-size: 1rem;font-weight: bold;"
             @click="drawerAddStudentBySearch=true">直接搜索学生导入</el-button>
@@ -44,7 +61,8 @@
                 :direction="'rtl'"
                 :before-close="(done) => { drawerAddStudentBySearch = false; done(); }"
                 style="z-index: 1001;"
-                :append-to-body="true">
+                :append-to-body="true"
+                :size="'50%'">
                 <div style="margin-left: 20px;margin-top: 0px;">
                     <div>
                     <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">搜索学生：</span>
@@ -59,15 +77,15 @@
                     <div class="card-row">
                         <!-- 左侧内容 -->
                         <div class="card-info">
-                        <span class="drawer-card-word">{{ student.id }}</span>
+                        <span class="drawer-card-word">{{ student.user_id }}</span>
                         <span class="drawer-card-word">{{ student.username }}</span>
                         <span class="drawer-card-word">{{ student.name }}</span>
-                        <span class="drawer-card-word">{{ student.email }}</span>
+                        <span class="drawer-card-word">{{ student.mail }}</span>
                         </div>
 
                         <!-- 右侧按钮 -->
                         <div class="card-actions">
-                            <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddStudent(student.id)">添加</span></el-button>
+                            <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddStudent(student.username)">添加</span></el-button>
                         </div>
                     </div>
                     </el-card>
@@ -110,22 +128,20 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  班级
                 </div>
               </template>
-              <div class="descriptions-content">
-              </div>
+              <div class = "descriptions-label">
+                </div>
             </el-descriptions-item>
           </el-descriptions>
 
           <el-descriptions 
           v-for="student in pagedStudents" :key="student.id" border style="margin-bottom: 2px;" 
-          class="descriptions"
-          @click="goToProfile(student.id)">
+          class="descriptions">
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  {{ student.id }}
+                  {{ student.user_id }}
                 </div>
               </template>
               <div class="descriptions-content">
@@ -139,16 +155,17 @@
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ student.email }}
+                {{ student.mail }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  {{ student.class }}
+                  <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+student.user_id)">查看学生</el-button>
                 </div>
               </template>
-              <div class="descriptions-content">
+              <div class = "descriptions-label">
+                  <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="deleteStudent(student.user_id)">删除学生</el-button>
               </div>
             </el-descriptions-item>
           </el-descriptions>
@@ -180,8 +197,8 @@
                 >
                     <el-menu-item
                     v-for="progress in processList"
-                    :key="progress.id"
-                    :index="progress.id.toString()"
+                    :key="progress.process_id"
+                    :index="progress.process_id"
                     >
                     <span style="font-size: 1.5rem;font-weight: bold;">{{ progress.name }}</span>
                     </el-menu-item>
@@ -235,31 +252,33 @@
                         :before-close="(done) => { drawerOfAddResource = false; done(); }"
                         style="z-index: 1001;"
                         :append-to-body="true">
-                        <div style="margin-left: 20px;margin-top: 80px;">
-                            <span style="color: rgb(100,100,100);font-size: 1.4rem;font-weight: bold;margin-top: -20px;">输入资源名称：（无则默认为文件名）</span>
-                            <el-input
-                                v-model="createResourceForm.name"
-                                placeholder="资源名称"
-                                clearable
-                                style="width: 300px; margin-bottom: 20px;"
-                            />
-                        </div>
                         <div>
+                            <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">选择是否公开：</span>
                             <el-radio-group v-model="createResourceForm.public" style="margin-left: 20px;margin-top: 10px;">
-                                <el-radio value="true">公开</el-radio>
-                                <el-radio value="false">私密</el-radio>
+                                <el-radio :value="true">公开</el-radio>
+                                <el-radio :value="false">私密</el-radio>
                             </el-radio-group>
                         </div>
                         <div>
+                            <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">选择一个Tag：</span>
                             <el-radio-group v-model="createResourceForm.tag" style="margin-left: 20px;margin-top: 10px;">
-                                <el-radio value="讲义">讲义</el-radio>
-                                <el-radio value="实验">实验</el-radio>
-                                <el-radio value="作业">作业</el-radio>
-                                <el-radio value="通知">通知</el-radio>
+                                <el-radio v-for="tag in allTags" :key="tag.tag_id" :value="tag.tag_id">{{ tag.name }}</el-radio>
                             </el-radio-group>
                         </div>
-                        <el-button style="margin-left:20px;margin-top: 10px;background-color:  rgb(80,80,80);color: white;"
-                        @click="createResourceSubmit">创建资源</el-button>
+                        <div>
+                        <span style="color: rgb(135,135,135);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">请确保文件小于1MB</span>
+                        </div>
+                        <el-button 
+                        style="margin-left: 30px;margin-right: 20px;margin-top: 20px;scale: 1.2;font-size: 1rem;font-weight: bold;">
+                        <el-upload style=""
+                        action="http://101.42.92.21:8080/process/resource/add"
+                        :headers="uploadHeaders"
+                        :data="uploadDataOfResource"
+                        name="data"
+                        :show-file-list="false"
+                        :on-success="handleUploadSuccessOfResource"
+                        :on-error="handleUploadErrorOfResource"
+                        >上传并创建资源</el-upload></el-button>
                     </el-drawer>
                     </div>
                 </el-card>
@@ -267,23 +286,36 @@
                 <!-- 资源列表 -->
                 <el-card
                     v-for="res in pagedResources"
-                    :key="res.code"
+                    :key="res.res_code"
                     class="card"
                 >
                     <div class="card-row" style="display: flex; justify-content: space-between;">
                     <div class="card-info" style="display: flex; flex-wrap: wrap;">
-                        <span class="cardWord">{{ res.code }}</span>
-                        <span class="cardWord">{{ res.name }}</span>
-                        <span class="cardWord">{{ res.public ? '是' : '否' }}</span>
-                        <span class="cardWord">{{ res.type }}</span>
-                        <span class="cardWord">{{ res.date }}</span>
-                        <span class="cardWord">{{ res.tag }}</span>
+                      <span class="cardWord">{{ res.res_code }}</span>
+                      <span class="cardWord">{{ res.name }}</span>
+                      <span class="cardWord">{{ res.process_id===-1 ? '是' : '否' }}</span>
+                      <span class="cardWord">{{ res.type }}</span>
+                      <span class="cardWord">{{ res.date.split('T')[0] }}</span>
+                      <span class="cardWord">
+                      <template v-for="(tagIdx, idx) in String(res.tag).split(',')" :key="tagIdx">
+                        {{ allTags[Number(tagIdx)]?.name || allTags[Number(tagIdx)] }}
+                        <span v-if="idx !== String(res.tag).split(',').length - 1">, </span>
+                      </template>
+                    </span>
                     </div>
 
                     <div class="card-actions" style="display: flex; align-items: center;">
-                        <el-button class="cardButton" @click="searchHistory(res.code)">查询历史</el-button>
-                        <el-button class="cardButton" @click="previewRes(res.id)">预览</el-button>
-                        <el-button class="cardButton" @click="downloadRes(res.id)">下载</el-button>
+                        <el-button class="cardButton" @click="searchHistory(res.res_id)">查询历史</el-button>
+                        <el-button class="cardButton" @click="previewRes(res.url)">预览</el-button>
+                        <el-button class="cardButton" @click="downloadRes(res.res_id)">下载</el-button>
+                        <el-button class="cardButton" @click="currentResId=res.res_id"><el-upload
+                          action="http://101.42.92.21:8080/process/resource/update"
+                        :headers="uploadHeaders"
+                        :data="uploadDataOfResourceUpdate"
+                        name="data"
+                        :show-file-list="false"
+                        :on-success="handleUploadSuccessOfResourceUpdate"
+                        :on-error="handleUploadErrorOfResourceUpdate">更新</el-upload></el-button>
                     </div>
                     </div>
                 </el-card>
@@ -314,16 +346,21 @@
                 <span class="cardWord"><strong>上传时间</strong></span>
                 <span class="cardWord"><strong>类型</strong></span>
               </el-card>
-              <el-card v-for="res in historyResources" :key="res.code" class="card">
+              <el-card v-for="res in historyResources" :key="res.res_id" class="card">
               <div class="card-row">
                 <!-- 左侧内容 -->
                 <div class="card-info">
-                  <span class="cardWord">{{ res.code }}</span>
+                  <span class="cardWord">{{ res.res_code }}</span>
                   <span class="cardWord">{{ res.name }}</span>
-                  <span class="cardWord">{{ res.public ? '是' : '否' }}</span>
+                  <span class="cardWord">{{ res.process_id===-1 ? '是' : '否' }}</span>
                   <span class="cardWord">{{ res.type }}</span>
-                  <span class="cardWord">{{ res.date }}</span>
-                  <span class="cardWord">{{ res.tag }}</span>
+                  <span class="cardWord">{{ res.date.split('T')[0] }}</span>
+                  <span class="cardWord">
+                  <template v-for="(tagIdx, idx) in String(res.tag).split(',')" :key="tagIdx">
+                    {{ allTags[Number(tagIdx)]?.name || allTags[Number(tagIdx)] }}
+                    <span v-if="idx !== String(res.tag).split(',').length - 1">, </span>
+                  </template>
+                </span>
                 </div>
 
                 <!-- 右侧按钮 -->
@@ -379,15 +416,15 @@
                     <div class="card-row">
                         <!-- 左侧内容 -->
                         <div class="card-info">
-                        <span class="drawer-card-word">{{ assAndTea.id }}</span>
+                        <span class="drawer-card-word">{{ assAndTea.user_id }}</span>
                         <span class="drawer-card-word">{{ assAndTea.username }}</span>
                         <span class="drawer-card-word">{{ assAndTea.name }}</span>
-                        <span class="drawer-card-word">{{ assAndTea.email }}</span>
+                        <span class="drawer-card-word">{{ assAndTea.mail }}</span>
                         </div>
 
                         <!-- 右侧按钮 -->
                         <div class="card-actions">
-                        <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddAssAndTea(assAndTea.id)">添加</span></el-button>
+                        <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddAssAndTea(assAndTea.user_id)">添加</span></el-button>
                         </div>
                     </div>
                     </el-card>
@@ -438,12 +475,11 @@
           </el-descriptions>
           <el-descriptions 
           v-for="assAndTea in pagedAssAndTea" :key="assAndTea.id" border style="margin-bottom: 2px;" 
-          class="descriptions"
-          @click="goToProfile(assAndTea.id)">
+          class="descriptions">
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  {{ assAndTea.id }}
+                  {{ assAndTea.user_id }}
                 </div>
               </template>
               <div class="descriptions-content">
@@ -457,7 +493,7 @@
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ assAndTea.email }}
+                {{ assAndTea.mail }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -470,6 +506,7 @@
                   </span>
                 </div>
               </template>
+              <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+assAndTea.user_id)">查看用户信息</el-button>
             </el-descriptions-item>
           </el-descriptions>
           <el-pagination
@@ -499,8 +536,12 @@
                     @select="handleTasksSelect"
                 >
                     <el-menu-item
+                    :key="2"
+                    :index="'2'">
+                    <span style="font-size: 1.5rem;font-weight: bold;" v-if="status!=1">未到截止日期</span></el-menu-item>
+                    <el-menu-item
                     :key="0"
-                    :index="'0'"
+                    :index="'0'" 
                     >
                     <span style="font-size: 1.5rem;font-weight: bold;" v-if="status==1">未完成</span>
                     <span style="font-size: 1.5rem;font-weight: bold;" v-if="status!=1">未批改</span>
@@ -510,7 +551,7 @@
                         <span style="font-size: 1.5rem;font-weight: bold;" v-if="status==1">已完成</span>
                         <span style="font-size: 1.5rem;font-weight: bold;" v-if="status!=1">已批改</span>
                     </el-menu-item>
-                    <el-menu-item @click="drawerOfAddTasks=true">
+                    <el-menu-item v-if = "status == 0" @click="drawerOfAddTasks=true">
                         <span style="font-size: 1.5rem;font-weight: bold;">添加任务</span>
                     </el-menu-item>
                     <el-drawer
@@ -543,14 +584,14 @@
                             <div class="card-row">
                                 <!-- 左侧内容 -->
                                 <div class="card-info">
-                                <span class="drawer-card-word">{{ task.id }}</span>
+                                <span class="drawer-card-word">{{ task.exer_id }}</span>
                                 <span class="drawer-card-word">{{ task.name }}</span>
-                                <span class="drawer-card-word">{{ task.creator_username }}</span>
+                                <span class="drawer-card-word">{{ task.creator_id }}</span>
                                 </div>
 
                                 <!-- 右侧按钮 -->
                                 <div class="card-actions">
-                                <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddPubAndPriTasks(task.id)">添加</span></el-button>
+                                <el-button class="cardButton"><span style="margin-top: 14px;" @click="drawerAddPubAndPriTasks(task.exer_id,task.creator_id)">添加</span></el-button>
                                 </div>
                             </div>
                             </el-card>
@@ -572,15 +613,21 @@
                         :before-close="(done) => { drawerOfTasksAddInfo = false; done(); }"
                         style="z-index: 1001;"
                         :append-to-body="true">
-                         <el-time-picker v-model="createTaskForm.begin_time" placeholder="起始时间" />
-                        <el-time-picker
+                        <div><span style="color: rgb(100,100,100);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">输入任务名称：</span><el-input v-model="createTaskForm.name" placeholder="任务名称" style="margin-left: 20px;margin-top: 20px;width: 300px;" /></div>
+                         <div><span style="color: rgb(100,100,100);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">选择起止时间：</span></div>
+                        <el-date-picker type='datetime' v-model="createTaskForm.begin_time" placeholder="起始时间" />
+                        <el-date-picker type="datetime"
                         v-model="createTaskForm.end_time"
                         placeholder="终止时间"
                         />
                         <div>
                             <el-radio-group v-model="createTaskForm.is_multi" style="margin-left: 20px;margin-top: 10px;">
-                                <el-radio value="true">可重复提交</el-radio>
-                                <el-radio value="false">不可重复提交</el-radio>
+                                <el-radio :value="true">可重复提交</el-radio>
+                                <el-radio :value="false">不可重复提交</el-radio>
+                            </el-radio-group>
+                            <el-radio-group v-model="createTaskForm.to_everyClass" style="margin-left: 20px;margin-top: 10px;">
+                                <el-radio :value="true">发布到所有班级</el-radio>
+                                <el-radio :value="false">仅发布到当前班级</el-radio>
                             </el-radio-group>
                         </div>
                         <el-button style="margin-left:20px;margin-top: 10px;background-color:  rgb(80,80,80);color: white;"
@@ -600,10 +647,8 @@
                         <span class="cardWord"><strong>名称</strong></span>
                         <span class="cardWord"><strong>开始时间</strong></span>
                         <span class="cardWord"><strong>结束时间</strong></span>
-                        <span class="cardWord"><strong>公开</strong></span>
+                        <span class="cardWord"><strong>发布到所有班级</strong></span>
                         <span class="cardWord"><strong>可重复提交</strong></span>
-                        <span class="cardWord"><strong>完成状态</strong></span>
-                        <span class="cardWord"><strong>批改状态</strong></span>
                     </div>
                     </div>
                 </el-card>
@@ -617,12 +662,23 @@
                     <div class="card-row" style="display: flex; justify-content: space-between;">
                     <div class="card-info" style="display: flex; flex-wrap: wrap;">
                         <span class="cardWord">{{ task.name }}</span>
-                        <span class="cardWord">{{ task.begin_time }}</span>
-                        <span class="cardWord">{{ task.end_time }}</span>
+                        <span class="cardWord">{{ task.begin_time.split('T')[0] + ';' + (task.begin_time.split('T')[1]?.split('.')[0] || '')}}</span>
+                        <span class="cardWord">{{ task.end_time.split('T')[0] + ';' + (task.end_time.split('T')[1]?.split('.')[0] || '') }}</span>
                         <span class="cardWord">{{ task.is_public }}</span>
                         <span class="cardWord">{{ task.is_multi }}</span>
-                        <span class="cardWord">{{ task.is_done }}</span>
-                        <span class="cardWord">{{ task.is_checked }}</span>
+                    </div>
+                    <div v-if = "status==0||status == 2"class = "card-actions" style="display:flex;flex-wrap:wrap;">
+                        <el-button class="cardButton" @click="router.push('/showExerInfo/'+task.exer_id)">查看任务</el-button>
+                        <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea">下载反馈报告</el-button>
+                        <el-button class="cardButton" v-if="toChooseTasks == 0 && task.reach_time" @click="router.push('/checkTaskList/'+task.exer_id)">批改任务</el-button>
+                    </div>
+                    <div v-if = "status==1"class = "card-actions" style="display:flex;flex-wrap:wrap;">
+                        <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea">下载反馈报告</el-button>
+                        <el-button class="cardButton" v-if="toChooseTasks == 0 && task.reach_time" >已经截止</el-button>
+                        <el-button class="cardButton" v-if="toChooseTasks == 0 && !task.reach_time" @click="router.push('/doTask/'+task.exer_id)">去完成</el-button>
+                        <el-button class="cardButton" v-if="toChooseTasks == 1 && !task.reach_time && task.is_multi" @click="router.push('/doTask/'+task.exer_id)">去完成</el-button>
+                        <el-button class="cardButton" v-if="toChooseTasks == 1 && !task.reach_time && !task.is_multi">已提交</el-button>
+                        <el-button class="cardButton" v-if="toChooseTasks == 1 && task.reach_time" @click="router.push('/showCheckDetail/'+task.exer_id+'/'+localStorage.getItem('userId'))">查看批改信息</el-button>
                     </div>
                     </div>
                 </el-card>
@@ -650,14 +706,53 @@ import { ref, onMounted, onUnmounted,computed } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute } from 'vue-router';
 import router from '../router';
-import { getCourseInfoById,createClass,getClassInfoById } from '../js/api.js';
+import { getCourseInfoById,getUserCourses,getClassInfoById, getStudentListByClassIdAndCourseId,fetchAllStudents, deleteStudentFromClass, addStudentToClassById, getProcessesByClassId, addProcessByClassId, getResourcesByProcessId,getAllTags,getHistoryByResourceId,downloadResource, getAssAndTeaByClassId, getTeacherListByCourseId, addAssAndTeaToClass,getClassOfAssAndTeaOfCourse, chooseClassByClassId, getTaskListByClassId,  getUnCheckedTaskListByCourseId, getUnDoneTaskListOfAllOfStudent, getAllPrivateTasks, getAllPublicTasks, submitTaskToClass, generateReportOfTaskOfAssAndTea, generateReportOfTaskOfStu } from '../js/api.js';
 import { animate } from 'animejs'
 import { ElMessage, useTransitionFallthroughEmits } from 'element-plus';
+import { Base64 } from 'js-base64';
+import { el } from 'element-plus/es/locales.mjs';
 
 const route = useRoute();
 const classId = ref(0);
-const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、
-const belongingClass = ref(0); // 学生在该课程的班级
+const courseId = ref(0);
+const status = ref(0); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4无关老师
+const userAllCourses = ref([]);
+const judgeStatus = async () => {
+  const userId = localStorage.getItem('userId');
+  const rawStatus = Number(localStorage.getItem('userIdentity')); // 原始身份
+  const cid = Number(courseId.value);
+
+  console.log("当前用户ID:"+userId);
+  userAllCourses.value = await getUserCourses(userId);
+  console.log("用户所属所有课程:", userAllCourses.value);
+
+  if (rawStatus === 0) {
+    // 老师
+    // userAllCourses.value 是课程id数组
+    const courseList = userAllCourses.value[0];
+    if (courseList && courseList.some(c => c.course_id === cid)) {
+      status.value = 0; // 老师且与该课有关
+    } else {
+      status.value = 4; // 老师但与该课无关
+    }
+  } else if (rawStatus === 1) {
+    // 学生
+    // userAllCourses.value 是 [学生课程列表, 助教课程列表]
+    const [studentCourses, assistantCourses] = userAllCourses.value;
+    const inStudent = studentCourses && studentCourses.some(c => c.course_id === cid);
+    const inAssistant = assistantCourses && assistantCourses.some(c => c.course_id === cid);
+    if (inStudent) {
+      status.value = 1; // 学生
+    } else if (inAssistant) {
+      status.value = 2; // 助教
+    } else {
+      status.value = 3; // 学生未选课
+    }
+  }
+  // 测试用
+  // status.value = 0;
+  console.log("身份状态:", status.value);
+}
 
 const distance = ref('140px');
 const distanceOfButton = ref('630px');
@@ -704,12 +799,45 @@ const classInfo = ref({
 
 const getCourse = async (id) => {
   const res = await getCourseInfoById(id);
-  return res;
+  if(res.success){
+    courseInfo.value = res.data;
+  }else{
+    ElMessage({
+      message: '获取课程信息失败',
+      type: 'error',
+      duration: 2000
+    });
+  }
 };
 const getClass = async (id) => {
   const res = await getClassInfoById(id);
-  return res;
+  if(res.success){
+    classInfo.value = res.data;
+  }else{
+    ElMessage({
+      message: '获取班级信息失败',
+      type: 'error',
+      duration: 2000
+    });
+  }
 };
+const chooseClass = async ()=>{
+  const res = await chooseClassByClassId(courseId.value,classInfo.value.class_code,localStorage.getItem('userId'));
+  if(res.success){
+    ElMessage({
+      message: '选择班级成功',
+      type: 'success',
+      duration: 2000
+    });
+    router.push('/class/'+classInfo.value.class_id);
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
 
 const registerMouseEnter = () => {
   animate('.register-btn', {
@@ -748,8 +876,39 @@ const imgMouseLeave = (str) => {
   });
 };
 
+const uploadData = computed(() => ({
+  user_id: localStorage.getItem('userId'),
+  class_id: classId.value
+}))
+
+// 如果需要携带 token 或其他 header，可设置
+const uploadHeaders = {
+  'Authorization': `${localStorage.getItem('token')}`
+}
+const handleUploadSuccess = (response) => {
+  ElMessage.success('上传成功')
+  // 你可以根据 response 做进一步处理
+}
+
+const handleUploadError = () => {
+  ElMessage.error('上传失败')
+}
+
 const drawerAddStudentBySearch = ref(false);
 const drawerSearchTextOfStudent = ref('');
+
+const getAllTheStudents = async () => {
+  const res = await fetchAllStudents();
+  if (res.success) {
+    allTheStudents.value = res.data;
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+};
 
 const allTheStudents = ref([
   { id: 101, username: 'stuA', name: '张三', email: 'zs@mail.com' },
@@ -781,7 +940,19 @@ const drawerPagedStudent = computed(() => {
   const start = (drawerCurrentPageOfStudent.value - 1) * pageSize
   return drawerFilteredStudent.value.slice(start, start + pageSize)
 })
-const drawerAddStudent = (id) => {
+const drawerAddStudent = async (id) => {
+  const res = await addStudentToClassById(courseId.value, classId.value, localStorage.getItem('userId'), id);
+  if(res.success){
+    await getStudentList();
+    drawerAddStudentBySearch.value = false;
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+    return;
+  }
   ElMessage({
     message: '添加成功',
     type: 'success',
@@ -796,6 +967,7 @@ const navItems = computed(() => {
     if(status.value == 1){
       return ['进度','助教/老师','任务'];
     }
+    if(status.value == 3||status.value == 4) return ['助教/老师'];
     return ['学生','进度','助教/老师','任务'];
     
 });
@@ -804,6 +976,29 @@ const currentTab = ref('助教/老师');
 
 const searchText = ref('');
 
+const getStudentList = async () => {
+  const res = await getStudentListByClassIdAndCourseId(courseInfo.value.course_id,classId.value, localStorage.getItem('userId'));
+  if(res.success){
+    sampleStudents.value = res.data;
+  }else{
+    ElMessage({
+      message: '获取学生列表失败',
+      type: 'error',
+      duration: 2000
+    });
+  }
+};
+const deleteStudent = async(id)=>{
+  const res = await deleteStudentFromClass(courseId.value,classId.value,id);
+  if(res.success){
+    ElMessage({
+      message: '删除成功',
+      type: 'success',
+      duration: 2000
+    });
+    await getStudentList();
+  }
+}
 const sampleStudents = ref([
   { id: 101, username: 'stuA', name: '张三', email: 'zs@mail.com',class: 'C101' },
   { id: 102, username: 'stuB', name: '李四', email: 'ls@mail.com',class: 'C101' },
@@ -841,7 +1036,18 @@ const pagedStudents = computed(() => {
 const handlePageChange = (page) => {
   currentPage.value = page
 }
-
+const getAllProcess = async () => {
+  const res = await getProcessesByClassId(courseId.value,classId.value);
+  if(res.success){
+    processList.value = res.data;
+    await handleProgressSelect(processList.value[0].process_id);
+  }else{
+    ElMessage({
+      type:'error',
+      message:res.errorMsg
+    })
+  }
+};
 const processList = ref([
   { id: 1, name: '实验一',createTime: '2025-05-01'  },
   { id: 2, name: '实验二' ,createTime: '2025-05-01' },
@@ -855,7 +1061,7 @@ const createProcessForm = ref({
   name: '',
   createTime: '',
 });
-const createProcessSubmit = () => {
+const createProcessSubmit = async () => {
   if (createProcessForm.value.name.trim() === '') {
     ElMessage({
       message: '进度名称不能为空',
@@ -864,12 +1070,18 @@ const createProcessSubmit = () => {
     });
     return;
   }
-  const newProcess = {
-    id: processList.value.length + 1,
-    name: createProcessForm.value.name,
-    createTime: new Date().toISOString().split('T')[0]
-  };
-  processList.value.push(newProcess);
+  const res = await addProcessByClassId(createProcessForm.value.name,courseId.value,classId.value,new Date().toISOString().split('T')[0]);
+  if(res.success){
+    
+  }else{
+    ElMessage({
+      message: '添加进度失败',
+      type: 'warning',
+      duration: 2000
+    });
+    return;
+  }
+  await getAllProcess();
   createProcessForm.value.name = '';
   drawerOfCreatingProcess.value = false;
   ElMessage({
@@ -887,9 +1099,19 @@ const sampleResources = ref([
   { id:0,url:"",code: 'R003', name: '作业一', public: true, type: 'PDF', date: '2025-05-03', tag: '作业' },
   { id:0,url:"",code: 'R003', name: '作业一', public: true, type: 'PDF', date: '2025-05-03', tag: '作业' }
 ]);
-const handleProgressSelect = (id) => {
+const handleProgressSelect = async (id) => {
   selectedProgressId.value = id;
-//   filteredResources.value = ;
+  console.log("选择进度"+selectedProgressId.value);
+  const res = await getResourcesByProcessId(courseId.value,id);
+  if(res.success){
+    sampleResources.value = res.data;
+  }else{
+    ElMessage({
+      message: '获取资源列表失败',
+      type: 'error',
+      duration: 2000
+    });
+  }
 };
 const currentPageOfRes = ref(1);
 const handlePageChangeOfRes = (page) => {
@@ -906,18 +1128,55 @@ const historyResources = ref([
 ]);
 
 const drawerOfSearchHistory = ref(false);
-const searchHistory = (code) => {
+const searchHistory = async (id) => {
+  const res = await getHistoryByResourceId(id);
+  if (res.success) {
+    historyResources.value = res.data;
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
   drawerOfSearchHistory.value = true;
 }
-const previewRes = (id) => {
-  
+const previewRes = (url) => {
+  window.open('http://101.42.92.21:8012/onlinePreview?url='+encodeURIComponent(Base64.encode(url)));
 };
-const downloadRes = (id) => {
+const downloadRes = async (id) => {
+  const res = await downloadResource(id);
+  if (!res.success) {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+    return;
+  }
+  window.open(res.data);
   ElMessage({
     message: '下载成功',
     type: 'success',
     duration: 2000
   });
+}
+const currentResId = ref(null);
+const uploadDataOfResourceUpdate = computed(()=>({
+  res_id:currentResId.value,
+  is_public:false,
+}))
+const handleUploadSuccessOfResourceUpdate = ()=>{
+  ElMessage({
+    type:'success',
+    message:'更新成功'
+  })
+}
+const handleUploadErrorOfResourceUpdate = (error)=>{
+  ElMessage({
+    type:'error',
+    message:"请上传相同类型的文件"
+  })
 }
 const drawerOfAddResource = ref(false);
 const createResourceForm = ref({
@@ -930,28 +1189,73 @@ const createResourceForm = ref({
   date: '',
   tag: ''
 });
-const createResourceSubmit = () => {
-  const newResource = {
-    id: sampleResources.value.length + 1,
-    url: createResourceForm.value.url,
-    code: createResourceForm.value.code,
-    name: createResourceForm.value.name,
-    public: createResourceForm.value.public,
-    type: createResourceForm.value.type,
-    date: new Date().toISOString().split('T')[0],
-    tag: createResourceForm.value.tag
-  };
-  sampleResources.value.push(newResource);
-  createResourceForm.value.name = '';
-  drawerOfAddResource.value = false;
+const handleUploadSuccessOfResource = async (response)=>{
   ElMessage({
-    message: '创建成功',
-    type: 'success',
-    duration: 2000
-  });
-};
-const allTags = ['讲义', '作业', '实验', '通知'];
+    type:'success',
+    message:'上传成功'
+  })
+  console.log("上传的资源信息:",createResourceForm.value);
+  console.log("上传的资源对应进度：",selectedProgressId.value);
+  await getResourcesByProcessId(courseId.value,selectedProgressId.value);
+}
+const handleUploadErrorOfResource = (error)=>{
+  ElMessage({
+    type:'error',
+    message:error.response.data.errorMsg
+  })
+}
+const uploadDataOfResource = computed(()=>({
+  course_id:courseId.value,
+  class_id:classId.value,
+  process_id:createResourceForm.value.public?-1:selectedProgressId.value,
+  //a List of tag's index if tag in allTags
+  tags: createResourceForm.value.tag ? allTags.value.map((tag, index) => tag.tag_id === createResourceForm.value.tag ? index : -1).filter(index => index !== -1) : [],
+  is_public:createResourceForm.value.public
+}))
 
+const allTags = ref([]);
+const fetchAllTags = async () => {
+  const res = await getAllTags();
+  if (res.success) {
+    allTags.value = res.data;
+  } else {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+};
+const getClassOfAssAndTea = async(user)=>{
+  const res2 = await getClassOfAssAndTeaOfCourse(courseId.value,user.user_id);
+  if (res2.success) {
+    user.classes = res2.data.map(cls => cls.name);
+  } else {
+    user.classes = [];
+  }
+  if (user.identity === 0) {
+    sampleTeachers.value.push(user);
+  } else if (user.identity === 1) {
+    sampleAssistants.value.push(user);
+  }
+}
+
+const getAssAndTea = async()=>{
+  sampleAssistants.value = [];
+  sampleTeachers.value = [];
+  const res = await getAssAndTeaByClassId(classId.value);
+  if(res.success){
+    for(const user of res.data){
+      await getClassOfAssAndTea(user);
+    }
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
 
 const sampleAssistants = ref([
   { id: 201, username: 'taA', name: '王五', email: 'ww@mail.com',classes:['C101','C102'] },
@@ -1000,6 +1304,27 @@ const pagedAssAndTea = computed(() => {
 })
 const handlePageChangeOfAssAndTea = (page) => {
   currentPageOfAssAndTea.value = page
+}
+
+const getAssAndTeaFromCourse = async ()=>{
+  assistantsFromCourse.value = [];
+  teachersFromCourse.value = [];
+  const res = await getTeacherListByCourseId(courseId.value);
+  if(res.success){
+    for(const user of res.data){
+      if(user.identity === 1){
+        assistantsFromCourse.value.push(user);
+      }else{
+        teachersFromCourse.value.push(user);
+      }
+    }
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
 }
 
 const drawerOfAddAssAndTea = ref(false);
@@ -1051,19 +1376,152 @@ const drawerPagedAssAndTea = computed(() => {
   const start = (drawerCurrentPageOfAssAndTea.value - 1) * pageSize
   return drawerFilteredAssAndTea.value.slice(start, start + pageSize)
 })
-const drawerAddAssAndTea = (id) => {
-  ElMessage({
-    message: '添加成功',
-    type: 'success',
-    duration: 2000
-  });
+const drawerAddAssAndTea = async (id) => {
+  const res = await addAssAndTeaToClass(classId.value,id,courseId.value);
+  if(res.success){
+    await getAssAndTea();
+    ElMessage({
+      message: '添加成功',
+      type: 'success',
+      duration: 2000
+    });
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+  
 }
-
+const getTasksToShowOfAssAndTea = async ()=>{
+  tasksToShow.value = [];
+  const res = await getTaskListByClassId(courseId.value,classId.value);
+  const res2 = await getUnCheckedTaskListByCourseId(localStorage.getItem('userId'),courseId.value);
+  if(res.success){
+    if(res2.success){
+      for(const task of res.data){
+        task.is_checked = true;
+        const now = new Date();
+        const endTime = new Date(task.end_time);
+        if(now < endTime){
+          task.reach_time = false;
+          task.is_checked = false;
+        }else{
+          task.reach_time = true;
+        }
+        for(const task2 of res2.data){
+          if(task.exer_id === task2.exer_id){
+            task.is_checked = false;
+            break;
+          }
+        }
+        tasksToShow.value.push(task);
+      }
+    }else{
+      ElMessage({
+        message: res2.errorMsg,
+        type: 'error',
+        duration: 2000
+      });
+    }
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
+const getTasksToShowOfStudent = async ()=>{
+  tasksToShow.value=[];
+  const res = await getTaskListByClassId(courseId.value,classId.value);
+  const res2 = await getUnDoneTaskListOfAllOfStudent(localStorage.getItem('userId'));
+  if(res.success){
+    if(res2.success){
+      for(const task of res.data){
+        task.is_done = true;
+        const now = new Date();
+        const endTime = new Date(task.end_time);
+        if(now < endTime){
+          task.reach_time = false;
+        }else{
+          task.reach_time = true;
+        }
+        for(const task2 of res2.data){
+          if(task.exer_id === task2.exer_id){
+            task.is_done = false;
+            break;
+          }
+        }
+        tasksToShow.value.push(task);
+      }
+    }else{
+      ElMessage({
+        message: res2.errorMsg,
+        type: 'error',
+        duration: 2000
+      });
+    }
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
 const tasksToShow = ref([
     {id:0,begin_time:'2025-05-01',end_time:'2025-05-10',name:'实验一',is_public:true,score:100,is_multi:false,is_done:false,is_checked:false},
     {id:1,begin_time:'2025-05-01',end_time:'2025-05-10',name:'实验二',is_public:true,score:100,is_multi:false,is_done:false,is_checked:false},
     {id:2,begin_time:'2025-05-01',end_time:'2025-05-10',name:'实验三',is_public:false,score:100,is_multi:true,is_done:true,is_checked:true},
 ]);
+const getAllPriTasks = async()=>{
+  const res = await getAllPrivateTasks(localStorage.getItem('userId'));
+  if(res.success){
+    allPrivateTasks.value = res.data;
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+
+}
+const getAllPubTasks = async()=>{
+  const res = await getAllPublicTasks(courseId.value);
+  if(res.success){
+    allPublicTasks.value = res.data;
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
+const downloadReportOfAssAndTea = async(id)=>{
+  if(status.value == 1){
+    const res = await generateReportOfTaskOfStu(id,localStorage.getItem('userId'));
+  }else{
+    const res = await generateReportOfTaskOfAssAndTea(id);
+  }
+  if(res.success){
+    window.open(res.data);
+    ElMessage({
+      message: '下载成功',
+      type: 'success',
+      duration: 2000
+    });
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
 const allPrivateTasks = ref([
     {id:0,begin_time:'2025-05-01',end_time:'2025-05-10',name:'实验一',is_public:true,score:100,is_multi:false},
     {id:1,begin_time:'2025-05-01',end_time:'2025-05-10',name:'实验二',is_public:true,score:100,is_multi:false},
@@ -1125,33 +1583,46 @@ const createTaskForm = ref({
   begin_time: '',
   end_time: '',
   name: '',
+  creator_id:0,
+  to_everyClass:false,
   is_public: false,
   is_multi: false,
   is_done: false,
     is_checked: false
 });
-const drawerAddPubAndPriTasks = (id) => {
+const drawerAddPubAndPriTasks = (id,cId) => {
+  createTaskForm.value.id = id;
+  createTaskForm.value.creator_id = cId;
   drawerOfTasksAddInfo.value = true;
 }
-const drawerSubmitTask = () => {
-  const newTask = {
-    id: tasksToShow.value.length + 1,
-    begin_time: createTaskForm.value.begin_time,
-    end_time: createTaskForm.value.end_time,
-    name: createTaskForm.value.name,
-    is_public: createTaskForm.value.is_public,
-    is_multi: createTaskForm.value.is_multi,
-    is_done: false,
-    is_checked: false
-  };
-  tasksToShow.value.push(newTask);
-  createTaskForm.value.name = '';
-  drawerOfTasksAddInfo.value = false;
-  ElMessage({
-    message: '创建成功',
-    type: 'success',
-    duration: 2000
-  });
+const drawerSubmitTask = async () => {
+  const res =  await submitTaskToClass(
+    createTaskForm.value.id,
+    courseId.value,
+    classId.value,
+    createTaskForm.value.creator_id,
+    createTaskForm.value.begin_time,
+    createTaskForm.value.end_time,
+    createTaskForm.value.is_multi,
+    createTaskForm.value.name,
+    createTaskForm.value.to_everyClass
+  );
+  if(res.success){
+    getTasksToShowOfAssAndTea();
+    drawerOfTasksAddInfo.value = false;
+    ElMessage({
+      message: '创建成功',
+      type: 'success',
+      duration: 2000
+    });
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+  
 }
 const filteredTasks = computed(() =>{
     if(status.value == 1){
@@ -1162,8 +1633,11 @@ const filteredTasks = computed(() =>{
         }
     }
     if(status.value != 1){
+        if(toChooseTasks.value == 2){
+            return tasksToShow.value.filter(task=>task.reach_time==false);
+        }
         if(toChooseTasks.value == 0){
-            return tasksToShow.value.filter(task => task.is_checked == false);
+            return tasksToShow.value.filter(task => task.is_checked == false&& task.reach_time == true);
         }else{
             return tasksToShow.value.filter(task => task.is_checked == true);
         }
@@ -1184,10 +1658,35 @@ const goToProfile = (id) => {
   router.push(`/profile/${id}`);
 };
 
-onMounted(() => {
+onMounted(async() =>  {
+  console.log("当前班级id："+classId.value);
   classId.value = route.params.id;
-//   classInfo.value = getClass(classId.value);
-//   courseInfo.value = getCourse(classInfo.value.course_id);
+  await getClass(classId.value);
+  await getCourse(classInfo.value.course_id);
+  courseId.value = classInfo.value.course_id;
+
+  await judgeStatus();
+
+  //助教/老师：获取学生列表
+  if(status.value == 0||status.value == 2){
+    await getStudentList();
+    await getAllTheStudents();
+  }
+  await getAllProcess();
+  await fetchAllTags();
+
+  //获取助教/老师列表
+  await getAssAndTea();
+
+  await getAssAndTeaFromCourse();
+
+  if(status.value == 1){
+    await getTasksToShowOfStudent();
+  }else if(status.value == 0 || status.value == 2){
+    await getTasksToShowOfAssAndTea();
+    await getAllPriTasks();
+    await getAllPubTasks();
+  }
 
   window.addEventListener('scroll', handleScroll)
 });
@@ -1208,7 +1707,7 @@ onUnmounted(() => {
   margin-top: -80px;
   margin-left: -8px;
   background-position: center;
-  z-index: -1;
+  z-index: 1;
 }
 .courseNameTitle {
   position: relative;
@@ -1283,12 +1782,12 @@ onUnmounted(() => {
   color: #424242;
   font-size: 1.2rem;
   font-weight: bold;
-  width: 300px;
+  width: 230px;
 }
 .descriptions-content{
   color: #424242;
   font-size: 1.2rem;
-  width: 250px;
+  width: 230px;
 }
 .class-box {
   height: 200px;
@@ -1327,20 +1826,20 @@ onUnmounted(() => {
   margin-bottom: 5px;
 }
 .cardWord{
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: bold;
   margin-left: 20px;
   margin-right: 10px; 
   display: inline-block;
-  width: 120px;
+  width: 100px;
 }
 .drawer-card-word{
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: bold;
   margin-left: 20px;
   margin-right: 10px; 
   display: inline-block;
-  width: 40px;
+  width: 60px;
 }
 .cardButton{
   margin-top: -50px;

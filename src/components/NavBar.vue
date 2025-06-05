@@ -15,6 +15,7 @@
       <el-menu-item index="/courses" class="el-menu-item-trans">我的课程</el-menu-item>
       <el-menu-item index="/tasks" class="el-menu-item-trans">我的任务</el-menu-item>
       <el-menu-item index="/questions" class="el-menu-item-trans">我的题目</el-menu-item>
+      <el-menu-item :index="`/profile/${userId}`" class="el-menu-item-trans">个人界面</el-menu-item>
       <el-text size="large" style="margin-top: -4px;font-weight: 700;" class="el-text">{{ user.name }} {{ identity }}，你好！</el-text>
     </el-menu>
   </div>
@@ -33,19 +34,19 @@ const props = defineProps({
     default: '1'
   }
 })
-
+const userId = ref();
 import { getUserInfoById } from '../js/api.js'
 
 onMounted(async () => {
   try {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
+    userId.value = localStorage.getItem('userId');
+    if (!userId.value) {
       console.error('未找到用户ID');
       return;
     }
     
     identity.value = localStorage.getItem('userIdentity') == 0 ? "老师" : "同学";
-    const userInfo = await getUserInfoById(userId);
+    const userInfo = await getUserInfoById(userId.value);
     if (userInfo) {
       user.value = userInfo;
       if (userInfo.identity == 0) {
