@@ -237,6 +237,7 @@ onMounted(async () => {
   await fetchExerName();
   await fetchCollectedProblems();
   fetchStudentInfo();
+  window.addEventListener('scroll', handleScroll);
 });
 
 const distance = ref('140px');

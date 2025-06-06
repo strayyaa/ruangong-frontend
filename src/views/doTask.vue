@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed,toRaw  } from 'vue';
+import { ref, onMounted, computed, toRaw, onUnmounted } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
@@ -207,11 +207,30 @@ const toggleCollect = async (probId) => {
   }
 };
 
+// 添加禁用复制粘贴的函数
+const preventCopyPaste = (e) => {
+  e.preventDefault();
+  return false;
+};
+
 onMounted(async () => {
+  // 添加全局事件监听器
+  document.addEventListener('copy', preventCopyPaste);
+  document.addEventListener('paste', preventCopyPaste);
+  document.addEventListener('cut', preventCopyPaste);
+  
   await getUserInfo();
   await fetchExerName();
   await fetchQuestionList();
   await fetchCollectedProblems();
+  window.addEventListener('scroll', handleScroll)
+});
+
+// 在组件卸载时移除事件监听器
+onUnmounted(() => {
+  document.removeEventListener('copy', preventCopyPaste);
+  document.removeEventListener('paste', preventCopyPaste);
+  document.removeEventListener('cut', preventCopyPaste);
 });
 
 const distance = ref('140px');

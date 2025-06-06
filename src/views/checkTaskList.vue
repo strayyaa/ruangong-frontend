@@ -53,8 +53,17 @@ const goToCheck = (user_id) => {
   console.log('任务id是',exer_id.value,'学生id是',user_id);
   router.push(`/checkTask/${route.params.id}/${user_id}`);
 };
+const handleScroll = () => {
+  const currentScroll = window.pageYOffset;
+  const scrollProgress = Math.min(currentScroll / 500, 1);
+  distance.value = `${Math.max(140 - scrollProgress * 140, 80)}px`;
+  distanceOfButton.value = `${Math.max(630 - currentScroll, 110)}px`;
+  contentOpacity.value = Math.max(0, 1 - scrollProgress);
+};
 onMounted(
-  fetchStudentList
+  fetchStudentList,
+  window.addEventListener('scroll', handleScroll)
+
 );
 </script>
 

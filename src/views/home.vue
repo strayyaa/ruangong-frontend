@@ -149,7 +149,7 @@
               <div class="card-row">
                 <div class="card-info">
                   <span class="cardWord">{{ getQuestionTypeText(question.type) }}</span>
-                  <span class="cardWord">{{ question.description }}</span>
+                  <span class="cardWord">{{ truncateText(question.description) }}</span>
                   <span v-if="currentQuestionType === 'wrong'" class="cardWord">题目来自:{{ question.exer_name }}</span>
                 </div>
                 <div class="card-actions">
@@ -173,7 +173,7 @@
 import { ref, computed, onMounted } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElNotification } from 'element-plus';
 import { getUserCourses,getUserInfoById,getUserTodolist,getUserTasks,getUserQuestions, generateReportOfTaskOfStu} from '../js/api';
 import { it } from 'element-plus/es/locales.mjs';
 
@@ -352,7 +352,13 @@ const handleRoleChange = (value) => {
   assistantRole.value = value;
   
 };
-
+const handleScroll = () => {
+  const currentScroll = window.pageYOffset;
+  const scrollProgress = Math.min(currentScroll / 500, 1);
+  distance.value = `${Math.max(140 - scrollProgress * 140, 80)}px`;
+  distanceOfButton.value = `${Math.max(630 - currentScroll, 110)}px`;
+  contentOpacity.value = Math.max(0, 1 - scrollProgress);
+};
 // 在组件挂载时获取课程数据
 onMounted(async () => {
   await getUserInfo();
@@ -360,6 +366,12 @@ onMounted(async () => {
   await fetchTodoList();
   await fetchTasks();
   await fetchQuestionlist();
+  window.addEventListener('scroll', handleScroll)
+  
+  // 添加检查截止时间的调用
+  setTimeout(() => {
+    checkDeadlines();
+  }, 1000); // 延迟1秒执行，确保数据已加载完成
 });
 
 // 任务数据
@@ -491,6 +503,12 @@ const getQuestionTypeText = (type) => {
   return typeMap[type] || '未知类型';
 };
 
+// 添加文本截断方法
+const truncateText = (text, maxLength = 20) => {
+  if (!text) return '';
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+};
+
 // 获取题目空状态描述
 const getQuestionEmptyDescription = () => {
   if (isTeacher.value) {
@@ -522,6 +540,30 @@ const getQuestionEmptyDescription = () => {
 const handleQuestionTypeChange = (value) => {
   currentQuestionType.value = value;
   console.log('当前的题目类型是',currentQuestionType.value);
+};
+
+// 添加检查截止时间的函数
+const checkDeadlines = () => {
+  const now = new Date();
+  let offset = 0; // 用于计算每个通知的偏移量
+  
+  displayTodoTask.value.forEach(task => {
+    const endTime = new Date(task.end_time);
+    const timeDiff = endTime - now;
+    const hoursLeft = timeDiff / (1000 * 60 * 60);
+    
+    if (hoursLeft > 0 && hoursLeft <= 24) {
+      ElNotification({
+        title: '任务即将截止',
+        message: `任务"${task.name}"剩余时间不足1天`,
+        type: 'warning',
+        offset: offset, // 设置偏移量
+        //duration: 0, // 通知不会自动关闭
+        position: 'top-right'
+      });
+      offset += 100; // 每个通知向下偏移120像素
+    }
+  });
 };
 
 </script>

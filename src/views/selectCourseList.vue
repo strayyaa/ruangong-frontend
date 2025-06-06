@@ -78,10 +78,18 @@
       console.error('获取课程列表失败:', error);
     }
   };  
+const handleScroll = () => {
+  const currentScroll = window.pageYOffset;
+  const scrollProgress = Math.min(currentScroll / 500, 1);
+  distance.value = `${Math.max(140 - scrollProgress * 140, 80)}px`;
+  distanceOfButton.value = `${Math.max(630 - currentScroll, 110)}px`;
+  contentOpacity.value = Math.max(0, 1 - scrollProgress);
+};
   // 在组件挂载时获取课程数据
   onMounted(async () => {
     await getUserInfo();
     await fetchCourses();
+    window.addEventListener('scroll', handleScroll);
   });
   
   const goToCourse = (id) => { router.push(`/course/${id}`); };
