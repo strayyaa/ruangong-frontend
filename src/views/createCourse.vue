@@ -6,7 +6,7 @@
   <!-- 背景层 -->
   <div class="background-layer">
     <h1 :style="{ 'margin-top': distance }" class="page-title">创建课程</h1>
-    
+  </div>
     <!-- 表单内容块 -->
     <div class="form-container">
       <el-form :model="courseForm" label-width="200px">
@@ -69,7 +69,7 @@
         </el-form-item>
       </el-form>
     </div>
-  </div>
+  
 </template>
 
 <script setup>
@@ -184,6 +184,7 @@ onUnmounted(() => {
   border-radius: 12px;
   width: 75%;
   margin: 40px auto;
+  top:300px;
   color: rgb(206, 206, 206);
 }
 
@@ -194,7 +195,7 @@ onUnmounted(() => {
 }
 
 .form-item {
-  margin-bottom: 40px;
+  margin-bottom: 60px;
 }
 
 .create-btn {
@@ -211,9 +212,9 @@ onUnmounted(() => {
 
 :deep(.el-input__inner),
 :deep(.el-textarea__inner) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #c5c5c5 !important;
+  background-color: rgba(224, 224, 224,1) !important;
+  border: 1px solid rgba(209, 209, 209, 1) !important;
+  color: #4f4f4f !important;
 }
 
 :deep(.el-radio__label) {

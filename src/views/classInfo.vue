@@ -3,7 +3,8 @@
   <div class = "background-layer">
     <h1 :style = "{'margin-top': distance}" class="courseNameTitle" @click="scrollToTop">{{ courseInfo.name }}-{{ classInfo.name }}</h1>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">班级代码：{{ classInfo.class_code }}</p>
-
+    <p v-if="status!==null&&status===1" :style = "{opacity:contentOpacity}" class="courseInfoContent">任务完成情况:{{ finishRateOfStu[0] }}/{{ finishRateOfStu[1] }}</p>
+    <div v-if="status !==null">
     <el-button
         v-if = "status != 3"
         class="register-btn"
@@ -20,6 +21,7 @@
         @mouseleave="registerMouseLeave"
         @click="chooseClass"
     >选择课程</el-button>
+    </div>
     </div>
 
   <div class="tabs-container">
@@ -107,21 +109,21 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  用户ID
+                  <strong>用户名</strong>
                 </div>
               </template>
               <div class="descriptions-content">
-                <strong>用户名</strong>
+                姓名
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
-                <div class = "descriptions-label">
-                  姓名
+                <div class = "descriptions-content">
+                  邮箱
                 </div>
               </template>
               <div class="descriptions-content">
-                邮箱
+                任务完成率
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -140,21 +142,21 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  {{ student.user_id }}
+                  <strong>{{ student.username }}</strong>
                 </div>
               </template>
               <div class="descriptions-content">
-                <strong>{{ student.username }}</strong>
+                {{ student.name }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
-                <div class = "descriptions-label">
-                  {{ student.name }}
+                <div class = "descriptions-content">
+                  {{ student.mail }}
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ student.mail }}
+                {{ student.finishRate?.[0] ?? '-' }}/{{ student.finishRate?.[1] ?? '-' }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
@@ -185,7 +187,7 @@
                 <!-- 左侧进度选择器 -->
                 <div
                 style="width: 200px; background-color: transparent; border-right: 1px solid #ccc;
-                        overflow-y: auto; height: 100vh; padding: 8px 0;">
+                        overflow-y: auto; height: auto; padding: 8px 0;">
                 <el-menu
                     :default-active="selectedProgressId"
                     class="el-menu-vertical-demo"
@@ -235,7 +237,6 @@
                 <el-card class="card" v-if="processList.length > 0">
                     <div class="card-row" style="display: flex; justify-content: space-between;">
                     <div class="card-info" style="display: flex; flex-wrap: wrap;">
-                        <span class="cardWord"><strong>资源编码</strong></span>
                         <span class="cardWord"><strong>名称</strong></span>
                         <span class="cardWord"><strong>公开</strong></span>
                         <span class="cardWord"><strong>类型</strong></span>
@@ -291,7 +292,6 @@
                 >
                     <div class="card-row" style="display: flex; justify-content: space-between;">
                     <div class="card-info" style="display: flex; flex-wrap: wrap;">
-                      <span class="cardWord">{{ res.res_code }}</span>
                       <span class="cardWord">{{ res.name }}</span>
                       <span class="cardWord">{{ res.process_id===-1 ? '是' : '否' }}</span>
                       <span class="cardWord">{{ res.type }}</span>
@@ -316,6 +316,7 @@
                         :show-file-list="false"
                         :on-success="handleUploadSuccessOfResourceUpdate"
                         :on-error="handleUploadErrorOfResourceUpdate">更新</el-upload></el-button>
+                        <el-button class="cardButton" @click="deleteRes(res.res_id)">删除</el-button>
                     </div>
                     </div>
                 </el-card>
@@ -499,14 +500,17 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  <span class = "descriptions-content" v-if="assAndTea.classes.length == 0">无</span>
-                  <span class="descriptions-content" v-for="(cls,index) in assAndTea.classes" :key="cls">
+                  <span v-if="assAndTea.classes.length == 0">无</span>
+                  <span v-for="(cls,index) in assAndTea.classes" :key="cls">
                     {{ cls }}
                   <span v-if="index!=assAndTea.classes.length-1">, </span>
                   </span>
                 </div>
               </template>
+              <div class = "descriptions-label">
+                
               <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+assAndTea.user_id)">查看用户信息</el-button>
+              </div>
             </el-descriptions-item>
           </el-descriptions>
           <el-pagination
@@ -671,7 +675,8 @@
                     </div>
                     <div v-if = "status==0||status == 2" class = "card-actions" style="display:flex;flex-wrap:wrap;">
                         <el-button class="cardButton" @click="router.push('/showExerInfo/'+task.exer_id)">查看任务</el-button>
-                        <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea(task.exer_id)">下载反馈报告</el-button>
+                        <el-button class="cardButton" v-if = "toChooseTasks==2" @click="drawerShowFinishRate(task.exer_id)">完成情况</el-button>
+                         <el-button class="cardButton" v-if = "toChooseTasks==1" @click="downloadReportOfAssAndTea(task.exer_id)">下载反馈报告</el-button>
                         <el-button class="cardButton" v-if="toChooseTasks == 0 && task.reach_time" @click="router.push('/checkTaskList/'+task.exer_id)">批改任务</el-button>
                     </div>
                     <div v-if = "status==1" class = "card-actions" style="display:flex;flex-wrap:wrap;">
@@ -692,6 +697,39 @@
                     @current-change="handlePageChangeOfTasks"
                     style="margin-top: 20px; text-align: center;">
                 </el-pagination>
+                <el-drawer
+                    title="学生完成任务情况"
+                    v-model="drawerOfShowFinishRate"
+                    :direction="'rtl'"
+                    :before-close="(done) => { drawerOfShowFinishRate = false; done(); }"
+                    style="z-index: 1001;"
+                    :append-to-body="true">
+                    <el-card class="card">
+                        <span class="drawer-card-word"><strong>用户名</strong></span>
+                        <span class="drawer-card-word"><strong>姓名</strong></span>
+                        <span class="drawer-card-word"><strong>是否完成</strong></span>
+                    </el-card>
+                    <el-card v-for="stu in showStudentFinishRate[0]" :key="stu.user_id" class="card">
+                        <div class="card-row">
+                            <!-- 左侧内容 -->
+                            <div class="card-info">
+                                <span class="drawer-card-word">{{ stu.username }}</span>
+                                <span class="drawer-card-word">{{ stu.name }}</span>
+                                <span class="drawer-card-word">是</span>
+                            </div>
+                        </div>
+                    </el-card>
+                    <el-card v-for="stu in showStudentFinishRate[1]" :key="stu.user_id" class="card">
+                        <div class="card-row">
+                            <!-- 左侧内容 -->
+                            <div class="card-info">
+                                <span class="drawer-card-word">{{ stu.username }}</span>
+                                <span class="drawer-card-word">{{ stu.name }}</span>
+                                <span class="drawer-card-word">否</span>
+                            </div>
+                        </div>
+                    </el-card>
+                </el-drawer>
                 </div>
             </div>
         </template>
@@ -703,11 +741,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted,computed } from 'vue';
+import { ref, onMounted, onUnmounted,computed,inject } from 'vue';
 import NavBar from '../components/NavBar.vue';
 import { useRoute } from 'vue-router';
 import router from '../router';
-import { getCourseInfoById,getUserCourses,getClassInfoById, getStudentListByClassIdAndCourseId,fetchAllStudents, deleteStudentFromClass, addStudentToClassById, getProcessesByClassId, addProcessByClassId, getResourcesByProcessId,getAllTags,getHistoryByResourceId,downloadResource, getAssAndTeaByClassId, getTeacherListByCourseId, addAssAndTeaToClass,getClassOfAssAndTeaOfCourse, chooseClassByClassId, getTaskListByClassId,  getUnCheckedTaskListByCourseId, getUnDoneTaskListOfAllOfStudent, getAllPrivateTasks, getAllPublicTasks, submitTaskToClass, generateReportOfTaskOfAssAndTea, generateReportOfTaskOfStu } from '../js/api.js';
+import { getCourseInfoById,getUserCourses,getClassInfoById, getStudentListByClassIdAndCourseId,fetchAllStudents, deleteStudentFromClass, addStudentToClassById, getProcessesByClassId, addProcessByClassId, getResourcesByProcessId,getAllTags,getHistoryByResourceId,downloadResource, getAssAndTeaByClassId, getTeacherListByCourseId, addAssAndTeaToClass,getClassOfAssAndTeaOfCourse, chooseClassByClassId, getTaskListByClassId,  getUnCheckedTaskListByCourseId, getUnDoneTaskListOfAllOfStudent, getAllPrivateTasks, getAllPublicTasks, submitTaskToClass, generateReportOfTaskOfAssAndTea, generateReportOfTaskOfStu, deleteResource, getFinishRateOfStudent, getTaskFinishStudent } from '../js/api.js';
 import { animate } from 'animejs'
 import { ElMessage, useTransitionFallthroughEmits } from 'element-plus';
 import { Base64 } from 'js-base64';
@@ -762,6 +800,19 @@ const judgeStatus = async () => {
   // 测试用
   // status.value = 0;
   console.log("身份状态:", status.value);
+}
+const finishRateOfStu = ref([]);
+const getFinishRate = async()=>{
+  const res = await getFinishRateOfStudent(localStorage.getItem('userId'),courseId.value,targetClass.value.class_id);
+  if(res.success){
+    finishRateOfStu.value = res.data;
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
 }
 
 const distance = ref('140px');
@@ -991,6 +1042,19 @@ const getStudentList = async () => {
   const res = await getStudentListByClassIdAndCourseId(courseInfo.value.course_id,classId.value, localStorage.getItem('userId'));
   if(res.success){
     sampleStudents.value = res.data;
+    for(let i = 0; i < sampleStudents.value.length; i++){
+      const res = await getFinishRateOfStudent(sampleStudents.value[i].user_id,courseId.value,classId.value);
+      if(res.success){
+        sampleStudents.value[i].finishRate = res.data;
+      }else{
+        sampleStudents.value[i].finishRate = [];
+        ElMessage({
+          message: res.errorMsg,
+          type: 'error',
+          duration: 2000
+        });
+      }
+    }
   }else{
     ElMessage({
       message: '获取学生列表失败',
@@ -1176,6 +1240,23 @@ const downloadRes = async (id) => {
     type: 'success',
     duration: 2000
   });
+}
+const deleteRes = async (id) =>{
+  const res = await deleteResource(id);
+  if(res.success){
+    ElMessage({
+      message: '删除成功',
+      type: 'success',
+      duration: 2000
+    });
+    await handleProgressSelect(selectedProgressId.value);
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
 }
 const currentResId = ref(null);
 const uploadDataOfResourceUpdate = computed(()=>({
@@ -1525,6 +1606,21 @@ const getAllPubTasks = async()=>{
     });
   }
 }
+const drawerOfShowFinishRate = ref(false);
+const showStudentFinishRate = ref([]);
+const drawerShowFinishRate = async(id)=>{
+  drawerOfShowFinishRate.value = true;
+  const res = await getTaskFinishStudent(id);
+  if(res.success){
+    showStudentFinishRate.value = res.data;
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
 const downloadReportOfAssAndTea = async(id)=>{
 
   const res = await generateReportOfTaskOfAssAndTea(id);
@@ -1687,6 +1783,7 @@ const goToLookCheckDetail = (id)=>{
   router.push(`/showCheckDetail/${id}/${localStorage.getItem('userId')}`);
 }
 
+const loading = inject('globalLoading');
 onMounted(async() =>  {
   console.log("当前班级id："+classId.value);
   classId.value = route.params.id;
@@ -1696,6 +1793,9 @@ onMounted(async() =>  {
 
   await judgeStatus();
 
+  if(status.value == 1){
+    await getFinishRate();
+  }
   //助教/老师：获取学生列表
   if(status.value == 0||status.value == 2){
     await getStudentList();
@@ -1800,6 +1900,12 @@ onUnmounted(() => {
   background-color:transparent; /* 可自定义背景 */
   /* color:rgb(255,255,255,1); */
 }
+.main-tabs :deep(.el-tabs__content) {
+  max-height: calc(100vh - 230px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none; /* IE 10+ */
+}
 .coponent-title {
   color: #c5c5c5;
   font-size: 1.5rem;
@@ -1811,12 +1917,12 @@ onUnmounted(() => {
   color: #424242;
   font-size: 1.2rem;
   font-weight: bold;
-  width: 230px;
+  width: 150px;
 }
 .descriptions-content{
   color: #424242;
   font-size: 1.2rem;
-  width: 230px;
+  width: 150px;
 }
 .class-box {
   height: 200px;

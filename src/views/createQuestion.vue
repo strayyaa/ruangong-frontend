@@ -2,7 +2,7 @@
   <NavBar />
   <div class="background-layer">
     <h1 :style="{ 'margin-top': distance }" class="page-title">创建题目</h1>
-
+    </div>
     <div class="form-container">
       <el-form :model="questionForm" label-width="200px">
         <el-form-item>
@@ -80,7 +80,7 @@
         </el-form-item>
       </el-form>
     </div>
-  </div>
+  
 </template>
 
 <script setup>
@@ -212,6 +212,7 @@ onUnmounted(() => {
   border-radius: 12px;
   width: 75%;
   margin: 40px auto;
+  top:300px;
   color: rgb(206, 206, 206);
 }
 
@@ -233,21 +234,33 @@ onUnmounted(() => {
   box-shadow: none !important;
 }
 
-:deep(.el-input__inner),
+:deep(.el-input__wrapper) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+}
+:deep(.el-input__inner) {
+  color: #dcdada !important;
+}
 :deep(.el-textarea__inner) {
   background-color: rgba(255, 255, 255, 0.1) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #c5c5c5 !important;
+  color: #e4e4e4 !important;
 }
 
-:deep(.el-select .el-input__inner) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #c5c5c5 !important;
+:deep(.el-select__wrapper) {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  color: #434343 !important;
+  box-shadow: none !important;
 }
 
 :deep(.el-switch__core) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(135, 135, 135, 0.8) !important;
+  border: 1px solid rgba(191, 188, 26, 0.1) !important;
+}
+:deep(.el-switch.is-checked .el-switch__core) {
+  background-color: #dba810 !important; /* 打开时背景色（绿色，可自定义） */
+  border: 1px solid #dba810 !important;
 }
 </style>

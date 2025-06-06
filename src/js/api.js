@@ -1191,3 +1191,90 @@ export const createTask = async(courseId,creatorId,beginTime,endTime,isPublic,na
         throw new Error(error.response?.data?.message || '创建任务失败，请稍后重试');
     }
 }
+export const getStuClassByCourseId = async (courseId,userId)=>{
+    try {
+        const res = await instance.get('/class/stuin', {
+            params: {
+                course_id: courseId,
+                user_id: userId
+            }
+        });
+        if (res.status !== 200) {
+            throw new Error('获取学生班级失败');
+        }
+        console.log('获取学生班级:', res);
+        return res.data;
+    } catch (error) {
+        console.error('获取学生班级列表错误:', error.response || error);
+        ElMessage({
+            type: 'error',
+            message: error.response.data.errorMsg
+        });
+        throw new Error(error.response?.data?.message || '获取学生班级列表失败，请稍后重试');
+    }
+}
+export const deleteResource = async (resId) => {
+    try {
+        const res = await instance.delete('/process/resource/delete', {
+            params: {
+                res_id: resId
+            }
+        });
+        if (res.status !== 200) {
+            throw new Error('删除资源失败');
+        }
+        console.log('删除资源:', res);
+        return res.data;
+    } catch (error) {
+        console.error('删除资源错误:', error.response || error);
+        ElMessage({
+            type: 'error',
+            message: error.response.data.errorMsg
+        });
+        throw new Error(error.response?.data?.message || '删除资源失败，请稍后重试');
+    }
+}
+export const getFinishRateOfStudent = async(userId,courseId,clasId)=>{
+    try {
+        const res = await instance.get('/exer/stu/finish', {
+            params: {
+                user_id: userId,
+                course_id: courseId,
+                class_id: clasId
+            }
+        });
+        if (res.status !== 200) {
+        throw new Error('获取学生完成率失败');
+        }
+        console.log('获取学生完成率:', res);
+        return res.data;
+    } catch (error) {
+        console.error('获取学生完成率错误:', error.response || error);
+        ElMessage({
+        type: 'error',
+        message: error.response.data.errorMsg
+        });
+        throw new Error(error.response?.data?.message || '获取学生完成率失败，请稍后重试');
+    }
+}
+export const getTaskFinishStudent = async(exerId)=>{
+    try {
+        const res = await instance.get('/exer/stu/checkfinish', {
+            params: {
+                exer_id: exerId
+            }
+        });
+        if (res.status !== 200) {
+            throw new Error('获取任务完成学生列表失败');
+        }
+        console.log('获取任务完成学生列表:', res);
+        return res.data;
+    } catch (error) {
+        console.error('获取任务完成学生列表错误:', error.response || error);
+        ElMessage({
+            type: 'error',
+            message: error.response.data.errorMsg
+        });
+        throw new Error(error.response?.data?.message || '获取任务完成学生列表失败，请稍后重试');
+    }
+}

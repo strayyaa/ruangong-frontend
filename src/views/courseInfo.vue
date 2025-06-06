@@ -1,12 +1,5 @@
 <template>
-  <transition name="slide-fade">
-    <div
-      v-if="loading"
-      class="loading-mask"
-      ref="loadingMask"
-    ></div>
-  </transition>
-  <div v-show="!loading">
+
   <NavBar />
   <div class = "background-layer">
     <h1 :style = "{'margin-top': distance}" class="courseNameTitle" @click="scrollToTop">{{ courseInfo.name }}</h1>
@@ -14,6 +7,7 @@
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">考核方式：{{ courseInfo.assMethod }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学分：{{ courseInfo.score }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学时：{{ courseInfo.time }}</p>
+    <p v-if="status!==null&&status===1" :style = "{opacity:contentOpacity}" class="courseInfoContent">任务完成情况:{{ finishRateOfStu[0] }}/{{ finishRateOfStu[1] }}</p>
     <div v-if="status !==null">
       <div v-if="status!==1||targetClass!==null">
     <el-button
@@ -111,27 +105,27 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  用户ID
+                  <strong>用户名</strong>
                 </div>
               </template>
               <div class="descriptions-content">
-                <strong>用户名</strong>
+                姓名
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  姓名
+                  邮箱
                 </div>
               </template>
               <div class="descriptions-content">
-                邮箱
+                班级
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  班级
+                  任务完成率
                 </div>
               </template>
               <div class="descriptions-content">
@@ -145,30 +139,30 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
-                  {{ student.user_id }}
+                  <strong>{{ student.username }}</strong>
                 </div>
               </template>
               <div class="descriptions-content">
-                <strong>{{ student.username }}</strong>
+                {{ student.name }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  {{ student.name }}
+                  {{ student.mail }}
                 </div>
               </template>
               <div class="descriptions-content">
-                {{ student.mail }}
+                {{ student.class }}
               </div>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  {{ student.class }}
+                  {{ student.finishRate?.[0] ?? '-' }}/{{ student.finishRate?.[1] ?? '-' }}
                 </div>
               </template>
-              <div class = "descriptions-label">
+              <div class = "descriptions-content">
                   <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+student.user_id)">查看学生</el-button>
               </div>
             </el-descriptions-item>
@@ -189,13 +183,13 @@
           <el-row :gutter="20">
             <el-col :span="6" v-for="cls in sampleClasses" :key="cls.code">
               <el-card class="class-box" @click="jumpToClass(cls.class_id)">
-                <div class="color-block" :style="{ backgroundColor: cls.color }"></div>
+                <div class="color-block" :style="{ backgroundColor: cls.color.replace('rgb', 'rgba').replace(')', ', 0.5)') }"></div>
                 <div class="class-code">{{ cls.class_code }}-{{ cls.name }}</div>
               </el-card>
             </el-col>
             <el-col :span="6">
               <el-card class="class-box" v-if="status==0||status==2" @click="drawerOfCreatingClass = true">
-                <div class="color-block" style=" background-color: rgb(30,150,230) "></div>
+                <div class="color-block" style=" background-color: rgb(30,150,230,0.5) "></div>
                 <div class="class-code">添加班级</div>
               </el-card>
             </el-col>
@@ -239,7 +233,8 @@
           </div>
           <el-descriptions 
            border style="margin-bottom: 2px;" 
-          class="descriptions">
+          class="descriptions"
+          >
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-content">
@@ -267,6 +262,7 @@
                 </div>
               </template>
               <div class="descriptions-content">
+                
               </div>
             </el-descriptions-item>
           </el-descriptions>
@@ -297,16 +293,16 @@
             <el-descriptions-item>
               <template #label>
                 <div class = "descriptions-label">
-                  <span class = "descriptions-content" v-if="assAndTea.classes.length == 0">无</span>
-                  <span class="descriptions-content" v-for="(cls,index) in assAndTea.classes" :key="cls">
+                  <span v-if="assAndTea.classes.length == 0">无</span>
+                  <span v-for="(cls,index) in assAndTea.classes" :key="cls">
                     {{ cls }}
                   <span v-if="index!=assAndTea.classes.length-1">, </span>
                   </span>
                 </div>
               </template>
-              <div class = "descriptions-label">
-                  <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+assAndTea.user_id)">查看用户</el-button>
-              </div>
+              <div class="descriptions-content">
+              <el-button style="scale: 1.2;font-size: 1rem;font-weight: bold;" @click="router.push('/profile/'+assAndTea.user_id)">查看用户</el-button>
+                </div>
             </el-descriptions-item>
           </el-descriptions>
           <el-pagination
@@ -329,7 +325,6 @@
           </el-checkbox-group>
 
           <el-card class="card">
-            <span class="cardWord"><strong>资源编码</strong></span>
             <span class="cardWord"><strong>名称</strong></span>
             <span class="cardWord"><strong>公开</strong></span>
             <span class="cardWord"><strong>类型</strong></span>
@@ -340,7 +335,6 @@
             <div class="card-row">
               <!-- 左侧内容 -->
               <div class="card-info">
-                <span class="cardWord">{{ res.res_code }}</span>
                 <span class="cardWord">{{ res.name }}</span>
                 <span class="cardWord">{{ res.process_id===-1 ? '是' : '否' }}</span>
                 <span class="cardWord">{{ res.type }}</span>
@@ -358,6 +352,7 @@
                 <el-button class="cardButton"><span style="margin-top: 14px;" @click="searchHistory(res.res_id)">查询历史</span></el-button>
                 <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.url)">预览</span></el-button>
                 <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.res_id)">下载</span></el-button>
+                <el-button class="cardButton"><span style="margin-top: 14px;" @click="deleteRes(res.res_id)">删除</span></el-button>
               </div>
             </div>
           </el-card>
@@ -380,7 +375,6 @@
             :append-to-body="true"
             :size="'50%'" >
               <el-card class="card">
-                <span class="cardWord"><strong>资源编码</strong></span>
                 <span class="cardWord"><strong>名称</strong></span>
                 <span class="cardWord"><strong>公开</strong></span>
                 <span class="cardWord"><strong>类型</strong></span>
@@ -391,7 +385,6 @@
               <div class="card-row">
                 <!-- 左侧内容 -->
                 <div class="card-info">
-                  <span class="cardWord">{{ res.res_code }}</span>
                   <span class="cardWord">{{ res.name }}</span>
                   <span class="cardWord">{{ res.process_id===-1 ? '是' : '否' }}</span>
                   <span class="cardWord">{{ res.type }}</span>
@@ -418,22 +411,21 @@
     </el-tabs>
     
     </div>
-    </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted,computed } from 'vue';
+import { ref, onMounted, onUnmounted,computed,inject } from 'vue';
 import NavBar from '../components/NavBar.vue';
-import { useRoute } from 'vue-router';
+import { useRoute,onBeforeRouteLeave } from 'vue-router';
 import router from '../router';
-import { getCourseInfoById,createClass, getClassListByCourseId, getUserCourses,getAllClassListByCourseId, getStudentListByClassId,fetchAllStudents, fetchAllTeachers, addAssAndTeaToCourse, getTeacherListByCourseId, getProcessesByClassId, getResourcesByProcessId, getAllTags, downloadResource, getClassOfAssAndTeaOfCourse, getHistoryByResourceId } from '../js/api.js';
+import { getCourseInfoById,createClass, getClassListByCourseId, getUserCourses,getAllClassListByCourseId, getStudentListByClassId,fetchAllStudents, fetchAllTeachers, addAssAndTeaToCourse, getTeacherListByCourseId, getProcessesByClassId, getResourcesByProcessId, getAllTags, downloadResource, getClassOfAssAndTeaOfCourse, getHistoryByResourceId, getStuClassByCourseId, deleteResource, getFinishRateOfStudent } from '../js/api.js';
 import { animate } from 'animejs'
 import { ElMessage } from 'element-plus';
 import { lo } from 'element-plus/es/locales.mjs';
 import { all } from 'axios';
 import { Base64 } from 'js-base64';
 
-
+const loading = inject('globalLoading'); // 全局 loading 状态
 const route = useRoute();
 const courseId = ref(0);
 const status = ref(null); // 更换以模拟不同身份：0老师、1学生、2助教、3学生未选课、4老师与该课无关等
@@ -688,13 +680,13 @@ const currentTab = ref('助教/老师');
 const searchText = ref('');
 
 const sampleStudents = ref([
-  { id: 101, username: 'stuA', name: '张三', email: 'zs@mail.com',class: 'C101' },
-  { id: 102, username: 'stuB', name: '李四', email: 'ls@mail.com',class: 'C101' },
-  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102'},
-  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102'},
-  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102'},
-  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102'},
-  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102'},
+  { id: 101, username: 'stuA', name: '张三', email: 'zs@mail.com',class: 'C101',finishRate: [0, 0] },
+  { id: 102, username: 'stuB', name: '李四', email: 'ls@mail.com',class: 'C101' ,finishRate: [0, 0]},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102',finishRate: [0, 0]},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102',finishRate: [0, 0]},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102',finishRate: [0, 0]},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102',finishRate: [0, 0]},
+  { id: 103, username: 'stuC', name: '王五', email: 'ww@mail.com',class:'C102',finishRate: [0, 0]},
 ]);
 const getStudentsOfCourse = async ()=>{
   sampleStudents.value = [];
@@ -705,10 +697,22 @@ const getStudentsOfCourse = async ()=>{
   console.log("获取到的学生列表:",sampleStudents.value);
   for(let i=0;i<sampleStudents.value.length;i++){
     const res = await getClassListByCourseId(courseId.value,sampleStudents.value[i].user_id);
+    // const res = await getStuClassByCourseId(courseId.value,sampleStudents.value[i].user_id);
     if (res.success) {
       sampleStudents.value[i].class = res.data[0].name;
     } else {
       sampleStudents.value[i].class = '无';
+    }
+    const res2 = await getFinishRateOfStudent(sampleStudents.value[i].user_id,courseId.value,res.data[0].class_id);
+    if(res2.success){
+      sampleStudents.value[i].finishRate = res2.data;
+    }else{
+      sampleStudents.value[i].finishRate = [];
+      ElMessage({
+        message: res2.errorMsg,
+        type: 'error',
+        duration: 2000
+      });
     }
   }
 }
@@ -857,6 +861,19 @@ const getClass = async (id) => {
     });
   }
 };
+const finishRateOfStu = ref([]);
+const getFinishRate = async()=>{
+  const res = await getFinishRateOfStudent(localStorage.getItem('userId'),courseId.value,targetClass.value.class_id);
+  if(res.success){
+    finishRateOfStu.value = res.data;
+  }else{
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+  }
+}
 const getAllClasses = async (id) => {
   const res = await getAllClassListByCourseId(id,localStorage.getItem('userId'));
   console.log(res);
@@ -913,6 +930,9 @@ const allTagsWhenCreate = ref([]);
 const fetchAllResources = async ()=>{
   sampleResources.value = [];
   for(let i=0;i<sampleClasses.value.length;i++){
+    if(status.value == 1 && sampleClasses.value[i].class_id != targetClass.value.class_id){
+      continue; // 学生只能查看自己所在班级的资源
+    }
     const res = await getProcessesByClassId(courseId.value,sampleClasses.value[i].class_id);
     if(res.success){
       
@@ -1032,17 +1052,32 @@ const downloadRes = async (id) => {
     duration: 2000
   });
 }
+const deleteRes = async(id)=>{
+  const res = await deleteResource(id);
+  if(!res.success) {
+    ElMessage({
+      message: res.errorMsg,
+      type: 'error',
+      duration: 2000
+    });
+    return;
+  }else{
+    ElMessage({
+      message: '删除成功',
+      type: 'success',
+      duration: 2000
+    });
+    await fetchAllResources();
+  }
+}
 
 
 const goToProfile = (id) => {
   router.push(`/profile/${id}`);
 };
 
-const loading = ref(true);
 const loadingMask = ref(null);
 onMounted(async () => {
-  loading.value = true;
-  try{
   courseId.value = route.params.id;
   console.log(courseId.value);
   // 获取课程信息
@@ -1068,6 +1103,9 @@ onMounted(async () => {
     await getClass(courseId.value);
   }
   console.log("获取到的班级信息:",targetClass.value);
+  if(status.value == 1){
+    await getFinishRate();
+  }
   // 助教/老师：获取课程所有学生;获得所有学生列表（添加助教);获取所有老师列表（添加老师）
   if(status.value == 0||status.value == 2){
     await getStudentsOfCourse();
@@ -1085,35 +1123,8 @@ onMounted(async () => {
   }
 
   window.addEventListener('scroll', handleScroll)
-  }finally{
-    if (loading.value) {
-      animate(".loading-mask",{
-        width: [ '100vw', '0vw' ],
-        easing: 'easeInOutQuart',
-        duration: 800,
-        complete: () => {
-          loading.value = false;
-        }
-      });
-    } else {
-      loading.value = false;
-    }
-  }
 });
 onUnmounted(() => {
-  loading.value = true;
-  if (loadingMask.value) {
-    // 先把宽度设为0，准备动画
-    loadingMask.value.style.width = '0vw';
-    // 动画展开到100vw
-    animate({
-      targets: loadingMask.value,
-      width: [ '0vw', '100vw' ],
-      easing: 'easeInOutQuart',
-      duration: 800
-      // 不需要complete，页面即将卸载
-    });
-  }
   window.removeEventListener('scroll', handleScroll)
 })
 
@@ -1214,6 +1225,12 @@ onUnmounted(() => {
   background-color:transparent; /* 可自定义背景 */
   /* color:rgb(255,255,255,1); */
 }
+.main-tabs :deep(.el-tabs__content) {
+  max-height: calc(100vh - 230px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none; /* IE 10+ */
+}
 .coponent-title {
   color: #c5c5c5;
   font-size: 1.5rem;
@@ -1221,16 +1238,17 @@ onUnmounted(() => {
   margin-left: 80px;
   margin-right: 80px;
 }
+
 .descriptions-label {
   color: #424242;
   font-size: 1.2rem;
   font-weight: bold;
-  width: 300px;
+  width: 120px;
 }
 .descriptions-content{
   color: #424242;
   font-size: 1.2rem;
-  width: 250px;
+  width: 120px;
 }
 .class-box {
   height: 200px;
@@ -1240,6 +1258,7 @@ onUnmounted(() => {
   overflow: hidden;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 /* 上半部分：颜色块 */
@@ -1259,6 +1278,7 @@ onUnmounted(() => {
   align-items: center;
   font-size: 18px;
   font-weight: bold;
+  color: #313131;
 }
 .tag-selector {
   margin: 20px;

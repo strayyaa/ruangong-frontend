@@ -2,7 +2,7 @@
   <NavBar />
   <div class="background-layer">
     <h1 :style="{ 'margin-top': distancee }" class="page-title">创建任务</h1>
-
+    </div>
     <div class="form-container">
       <el-form :model="taskForm" label-width="200px">
         <el-form-item>
@@ -26,7 +26,7 @@
         <el-form-item>
           <template #label>
             <div style="width: 300px;">
-              <span class="inputTitle">选择添加到哪个课程:</span>
+              <span class="inputTitle">选择课程:</span>
             </div>
           </template>
           <span class="cardWord">{{ chosenCourseName }}</span>
@@ -34,6 +34,7 @@
             type="primary" 
             @click="drawerOfCourseChoose=true"
             class="action-btn"
+            style="margin-top: 0px;"
             @mouseenter="btnMouseEnter"
             @mouseleave="btnMouseLeave"
           >选择课程</el-button>
@@ -139,28 +140,38 @@
       direction="rtl"
       :append-to-body="true"
       :before-close="() => (drawerVisible = false)"
+      size="40%"
     >
       <div>
         <el-button 
           v-if="drawerShowPri"
-          style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
+          style="margin-left: 0px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;color:#353535;"
           @click="drawerShowPri=false"
-          class="action-btn"
+          class="action-btn-nomiss"
           @mouseenter="btnMouseEnter"
-          @mouseleave="btnMouseLeave"
-        >切换到公有题目</el-button>
+          @mouseleave="btnMouseLeaveSecond"
+        >显示公有题目</el-button>
         <el-button 
           v-if="!drawerShowPri"
-          style="margin-right: 20px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;"
-          @click="drawerShowPri=false"
-          class="action-btn"
+          style="margin-left: 0px;margin-top: -30px;scale: 1.2;font-size: 1rem;font-weight: bold;color:#353535;"
+          @click="drawerShowPri=true"
+          class="action-btn-nomiss"
           @mouseenter="btnMouseEnter"
-          @mouseleave="btnMouseLeave"
-        >切换到私有题目</el-button>
+          @mouseleave="btnMouseLeaveSecond"
+        >显示私有题目</el-button>
       </div>
-      <span style="color: rgb(206,206,206);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">搜索
+      <span style="color: rgb(30,30,30);font-size: 1.7rem;font-weight: bold;margin-top: -20px;">搜索
         <span v-if="drawerShowPri">私有</span><span v-else>公有</span>题目：</span>
       <el-input v-model="searchText" placeholder="搜索题目" style="margin-bottom: 20px;" />
+      <el-card class="card">
+        <div class="card-row">
+          <div class="card-info">
+            <span class="drawer-card-word">题目ID</span>
+            <span class="drawer-card-word">题型</span>
+            <span class="drawer-card-word">题目内容</span>
+          </div>
+        </div>
+      </el-card>
       <el-card v-for="q in pagedQuestions" :key="q.id" class="card">
         <div class="card-row">
           <div class="card-info">
@@ -173,11 +184,11 @@
           </div>
           <div class="card-actions">
             <el-button 
-              style="margin-left: auto" 
+              style="margin-left: auto;margin-top: 0px;color: #353535;" 
               @click="addQuestion(q)"
-              class="action-btn"
+              class="action-btn-nomiss"
               @mouseenter="btnMouseEnter"
-              @mouseleave="btnMouseLeave"
+              @mouseleave="btnMouseLeaveSecond"
             >添加</el-button>
           </div>
         </div>
@@ -191,7 +202,7 @@
         @current-change="currentPage = $event"
       />
     </el-drawer>
-  </div>
+  
 </template>
 
 <script setup>
@@ -228,6 +239,16 @@ const btnMouseLeave = (event) => {
     scale: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     color: 'rgba(203, 203, 203, 0.8)',
+    duration: 300,
+    easing: 'easeOutExpo'
+  })
+}
+
+const btnMouseLeaveSecond = (event) => {
+  animate(event.target, {
+    scale: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: '#353535',
     duration: 300,
     easing: 'easeOutExpo'
   })
@@ -361,7 +382,7 @@ onUnmounted(() => {
 })
 
 const questionBank = computed(() => {
-  return drawerShowPri ? priQuestions.value : pubQuestions.value;
+  return drawerShowPri.value ? priQuestions.value : pubQuestions.value;
 });
 const filteredQuestions = computed(() => {
   return questionBank.value.filter(q =>
@@ -454,6 +475,7 @@ const submitTask = async() => {
   border-radius: 12px;
   width: 75%;
   margin: 40px auto;
+  top:300px;
   color: rgb(206, 206, 206);
 }
 
@@ -473,7 +495,19 @@ const submitTask = async() => {
   scale: 1.5;
   margin-left: 40px;
   margin-right: 40px;
-  margin-top:20px;
+  margin-top:40px;
+}
+.action-btn-nomiss{
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(203, 203, 203, 0.8);
+  border: none !important;
+  border-radius: 25px !important;
+  backdrop-filter: blur(5px);
+  box-shadow: none !important;
+  scale: 1.5;
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-top:40px;
 }
 
 .submit-btn {
@@ -500,7 +534,7 @@ const submitTask = async() => {
   margin-left: 20px;
   margin-right: 10px;
   display: inline-block;
-  width: 150px;
+  width: 300px;
   color: #c5c5c5;
 }
 
@@ -595,10 +629,13 @@ const submitTask = async() => {
 }
 
 :deep(.el-switch__core) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(135, 135, 135, 0.8) !important;
+  border: 1px solid rgba(191, 188, 26, 0.1) !important;
 }
-
+:deep(.el-switch.is-checked .el-switch__core) {
+  background-color: #dba810 !important; /* 打开时背景色（绿色，可自定义） */
+  border: 1px solid #dba810 !important;
+}
 :deep(.el-drawer) {
   background-color: rgba(0, 0, 0, 0.9) !important;
 }
