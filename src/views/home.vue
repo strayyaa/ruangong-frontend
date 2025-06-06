@@ -23,7 +23,7 @@
             <el-card v-for="item in displayTodoTask" :key="item.exer_id" class="card">
               <div class="card-row">
                 <div class="card-info">
-                  <span class="cardWord">{{ item.name }}</span>
+                  <span class="cardWord">{{ truncateText(item.name) }}</span>
                   <span class="cardWord">开始：{{ formatDate(item.begin_time) }}</span>
                   <span class="cardWord">截止：{{ formatDate(item.end_time) }}</span>
                 </div>
@@ -102,7 +102,7 @@
             <el-card v-for="task in currentTaskList" :key="task.id" class="card">
               <div class="card-row">
                 <div class="card-info">
-                  <span class="cardWord">{{ task.name }}</span>
+                  <span class="cardWord">{{ truncateText(task.name) }}</span>
                   <span class="cardWord">{{ formatDate(task.begin_time) }} ~ {{ formatDate(task.end_time) }}</span>
                 </div>
                 <div class="card-actions">
@@ -217,7 +217,12 @@ const fetchTodoList = async () => {
   try {
     const response = await getUserTodolist(user.value.user_id, isTeacher.value, hasAssistantRole.value);
     if(isTeacher.value){
+      console.log('教师身份，获取代办列表');
       teacherTodo.value = response[0]||[];
+      teacherTodo.value.forEach(item => {
+         //输出每个任务的截止时间
+         console.log('任务截止时间:', item.end_time);
+      });
     }else if(isStudent.value&&hasAssistantRole.value){
       studentTodo.value = response[0]||[];
       assistantTodo.value = response[1]||[];
@@ -352,6 +357,10 @@ const handleRoleChange = (value) => {
   assistantRole.value = value;
   
 };
+const distance = ref('140px');
+const distanceOfButton = ref('630px');
+const contentOpacity = ref(1);
+
 const handleScroll = () => {
   const currentScroll = window.pageYOffset;
   const scrollProgress = Math.min(currentScroll / 500, 1);
@@ -504,7 +513,7 @@ const getQuestionTypeText = (type) => {
 };
 
 // 添加文本截断方法
-const truncateText = (text, maxLength = 20) => {
+const truncateText = (text, maxLength = 10) => {
   if (!text) return '';
   return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
 };
@@ -545,10 +554,12 @@ const handleQuestionTypeChange = (value) => {
 // 添加检查截止时间的函数
 const checkDeadlines = () => {
   const now = new Date();
+  console.log('当前时间:', now);
   let offset = 0; // 用于计算每个通知的偏移量
   
   displayTodoTask.value.forEach(task => {
     const endTime = new Date(task.end_time);
+    console.log(`任务 "${task.name}" 的截止时间:`, endTime);
     const timeDiff = endTime - now;
     const hoursLeft = timeDiff / (1000 * 60 * 60);
     
