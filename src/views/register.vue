@@ -40,7 +40,7 @@
           </el-input>
         </el-form-item>
         <el-form-item prop="birthday">
-          <el-date-picker v-model="registerForm.birthday" type="date" placeholder="生日（可选）" style="width: 100%" clearable="false"/>
+          <el-date-picker v-model="registerForm.birthday" type="date" placeholder="生日（可选）" style="width: 100%" :clearable="false"/>
         </el-form-item>
         <el-form-item prop="email">
           <el-input v-model="registerForm.email" placeholder="邮箱">
@@ -209,7 +209,7 @@ onMounted(() => {
   height: 100vh;
   width: 100%;
   background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9)),
-              url('../assets/backgroundimage_example.jpg');
+              url('../assets/back.png');
   background-size: cover;
   background-position: center;
   z-index: -1;

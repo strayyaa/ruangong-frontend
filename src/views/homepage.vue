@@ -256,7 +256,7 @@ onUnmounted(() => {
   height: 100vh;
   width:100%;
     background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9)), 
-              url('../assets/backgroundimage_example.jpg');
+              url('../assets/back.png');
   background-size: cover;
   margin-top: -70px;
   background-position: center;
