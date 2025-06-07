@@ -20,7 +20,7 @@
               <el-card v-for="course in allCourse" :key="course.course_id" class="card">
                 <div class="card-row">
                   <div class="card-info">
-                    <span class="cardWord">{{ course.name }}</span>
+                    <span class="cardWord">{{ truncateText(course.name) }}</span>
                     <span class="cardWord">考核方式：{{ course.assMethod }}</span>
                     <span class="cardWord">学分：{{ course.score }}</span>
                     <span class="cardWord">学时：{{ course.time }}</span>
@@ -64,7 +64,10 @@
     user.value = res;
     console.log(user.value);
   }
-  
+  const truncateText = (text, maxLength = 10) => {
+  if (!text) return '';
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+};
   // 课程数据
   const allCourse = ref([]);
   const fetchCourses = async () => {

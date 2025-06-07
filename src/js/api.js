@@ -1274,3 +1274,25 @@ export const getTaskFinishStudent = async(exerId)=>{
         throw new Error(error.response?.data?.message || '获取任务完成学生列表失败，请稍后重试');
     }
 }
+export const modifyProfileMyself = async (userId, name, mail, birthday) => {
+    try {
+        const res = await instance.post(`user/modify`, {
+            user_id: userId,
+            name: name,
+            mail: mail,
+            birthday: birthday,
+        });
+        if (res.status !== 200) {
+            throw new Error('修改用户信息失败');
+        }
+        console.log('修改用户信息:', res);
+        return res.data;
+    } catch (error) {
+        console.error('修改用户信息错误:', error.response || error);
+        ElMessage({
+            type: 'error',
+            message: error.response?.data?.errorMsg || '修改用户信息失败，请稍后重试'
+        });
+        throw new Error(error.response?.data?.message || '修改用户信息失败，请稍后重试');
+    }
+}

@@ -8,11 +8,12 @@
         <span class="toanimate">间</span>
       </h1>
     </div>
+    
     <div class="profile-main-content">
       <!-- 个人信息卡片 -->
+      <br><br><br><br><br><br>
       <el-card class="profile-info-card">
         <div class="profile-info-header">
-          <el-avatar :size="80" :src="user.avatar" />
           <div class="user-basic">
             <div class="user-name">{{ user.name }}</div>
             <div class="user-identity">{{ user.identity }}</div>
@@ -36,7 +37,7 @@
             <el-input v-model="editUser.email" />
           </el-form-item>
           <el-form-item label="生日" prop="birthday">
-            <el-date-picker v-model="editUser.birthday" type="date" style="width: 100%" />
+            <el-date-picker v-model="editUser.birthday" type="date" style="width: 100%" :clearable="false"/>
           </el-form-item>
           <div class="btn-group">
             <el-button type="success" @click="saveInfo">保存</el-button>
@@ -72,7 +73,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { animate } from 'animejs'
-import { getUserInfoById } from '../js/api'
+import { getUserInfoById,modifyProfileMyself } from '../js/api'
 
 const route = useRoute()
 const userId = route.params.id
@@ -90,6 +91,7 @@ const user = reactive({
   email: '',
   birthday: '',
   registerTime: '',
+  password:''
 })
 const editUser = ref({})
 const rules = {
@@ -133,14 +135,44 @@ const formatDate = (date) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${month}-${day}`;
 };
-const saveInfo = () => {
-  formRef.value.validate((valid) => {
+const saveInfo = async () => {
+  console.log('saveInfo function called.');
+  console.log(user.birthday)
+  formRef.value.validate(async (valid) => {
+    console.log('Form validation result:', valid);
     if (valid) {
       const newUser = { ...editUser.value };
       newUser.birthday = formatDate(newUser.birthday);
-      Object.assign(user, newUser);
-      editing.value = false;
-      ElMessage.success('保存成功')
+      console.log('传入的生日为',newUser.birthday)
+
+      // 在这里添加日志，确认生日的最终格式
+      console.log('准备发送的生日格式:', newUser.birthday);
+
+      try {
+        // 调用修改个人信息的接口，只传递需要的参数
+        const res = await modifyProfileMyself(
+          localStorage.getItem('userId'), // userId
+          newUser.name,   // name
+          newUser.email,  // mail
+          newUser.birthday // birthday
+        );
+            
+        if (res.success) {
+          // 更新本地用户数据
+          Object.assign(user, newUser);
+          // 重新获取用户信息以确保数据同步
+          await fetchUserInfo(); 
+          editing.value = false;
+          ElMessage.success('保存成功');
+        } else {
+          ElMessage.error(res.errorMsg || '保存失败，请稍后重试');
+        }
+      } catch (e) {
+        console.error('修改用户信息失败:', e);
+        ElMessage.error('保存失败，请稍后重试');
+      }
+    } else {
+      console.log('表单验证失败，传入的生日为',newUser.birthday)
     }
   })
 }

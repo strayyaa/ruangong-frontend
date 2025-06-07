@@ -668,8 +668,10 @@
                     <div class="card-row" style="display: flex; justify-content: space-between;">
                     <div class="card-info" style="display: flex; flex-wrap: wrap;">
                         <span class="cardWord">{{ task.name }}</span>
-                        <span class="cardWord">{{ task.begin_time.split('T')[0] + ';' + (task.begin_time.split('T')[1]?.split('.')[0] || '')}}</span>
-                        <span class="cardWord">{{ task.end_time.split('T')[0] + ';' + (task.end_time.split('T')[1]?.split('.')[0] || '') }}</span>
+                        <!-- <span class="cardWord">{{ task.begin_time.split('T')[0] + ';' + (task.begin_time.split('T')[1]?.split('.')[0] || '')}}</span> -->
+                        <!-- <span class="cardWord">{{ task.end_time.split('T')[0] + ';' + (task.end_time.split('T')[1]?.split('.')[0] || '') }}</span> -->
+                        <span class="cardWord">{{ formatDate(task.begin_time) }}</span>
+                        <span class="cardWord">{{ formatDate(task.end_time) }}</span>
                         <span class="cardWord">{{ task.is_public }}</span>
                         <span class="cardWord">{{ task.is_multi }}</span>
                     </div>
@@ -1576,6 +1578,12 @@ const getTasksToShowOfStudent = async ()=>{
     });
   }
 }
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ` +
+         `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+};
 const tasksToShow = ref([
     {id:0,begin_time:'2025-05-01',end_time:'2025-05-10',name:'实验一',is_public:true,score:100,is_multi:false,is_done:false,is_checked:false},
     {id:1,begin_time:'2025-05-01',end_time:'2025-05-10',name:'实验二',is_public:true,score:100,is_multi:false,is_done:false,is_checked:false},

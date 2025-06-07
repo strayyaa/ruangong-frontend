@@ -62,7 +62,7 @@
             <el-card v-for="course in displayCourses" :key="course.course_id" class="card">
               <div class="card-row">
                 <div class="card-info">
-                  <span class="cardWord">{{ course.name }}</span>
+                  <span class="cardWord">{{ truncateText(course.name,8) }}</span>
                   <span class="cardWord">考核方式：{{ course.assMethod }}</span>
                   <span class="cardWord">学分：{{ course.score }}</span>
                   <span class="cardWord">学时：{{ course.time }}</span>
@@ -137,7 +137,7 @@
             </el-radio-group>
           </div>
             <div class="module-actions">
-              <el-button v-if="isTeacher" class="create-button" @click="createQuestion">创建题目</el-button>
+              <el-button v-if="isTeacher||hasAssistantRole" class="create-button" @click="createQuestion">创建题目</el-button>
             </div>
           </div>
 
