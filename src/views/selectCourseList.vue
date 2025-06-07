@@ -81,6 +81,8 @@
       console.error('获取课程列表失败:', error);
     }
   };  
+const distanceOfButton = ref(0);
+const distance = ref(0);
 const handleScroll = () => {
   const currentScroll = window.pageYOffset;
   const scrollProgress = Math.min(currentScroll / 500, 1);

@@ -182,8 +182,6 @@
         <!-- 班级页 -->
         <template v-else-if="tab === '班级'">
           <el-row :gutter="20">
-            <el-empty v-if="sampleClasses.length === 0" description="当前课程暂无班级" style="text-align: center; width: 100%; margin-top: 20px;">
-            </el-empty>
             <el-col :span="6" v-for="cls in sampleClasses" :key="cls.code">
               <el-card class="class-box" @click="jumpToClass(cls.class_id)">
                 <div class="color-block" :style="{ backgroundColor: cls.color.replace('rgb', 'rgba').replace(')', ', 0.5)') }"></div>

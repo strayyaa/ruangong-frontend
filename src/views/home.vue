@@ -62,7 +62,7 @@
             <el-card v-for="course in displayCourses" :key="course.course_id" class="card">
               <div class="card-row">
                 <div class="card-info">
-                  <span class="cardWord">{{ truncateText(course.name,8) }}</span>
+                  <span class="cardWord">{{ truncateText(course.name,7) }}</span>
                   <span class="cardWord">考核方式：{{ course.assMethod }}</span>
                   <span class="cardWord">学分：{{ course.score }}</span>
                   <span class="cardWord">学时：{{ course.time }}</span>
@@ -513,7 +513,7 @@ const getQuestionTypeText = (type) => {
 };
 
 // 添加文本截断方法
-const truncateText = (text, maxLength = 10) => {
+const truncateText = (text, maxLength = 9) => {
   if (!text) return '';
   return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
 };
