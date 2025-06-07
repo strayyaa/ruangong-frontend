@@ -1259,11 +1259,7 @@ export const getFinishRateOfStudent = async(userId,courseId,clasId)=>{
 }
 export const getTaskFinishStudent = async(exerId)=>{
     try {
-        const res = await instance.get('/exer/stu/checkfinish', {
-            params: {
-                exer_id: exerId
-            }
-        });
+        const res = await instance.get(`/exer/checkfinish?exer_id=${exerId}`);
         if (res.status !== 200) {
             throw new Error('获取任务完成学生列表失败');
         }

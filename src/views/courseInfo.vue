@@ -7,8 +7,9 @@
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">考核方式：{{ courseInfo.assMethod }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学分：{{ courseInfo.score }}</p>
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学时：{{ courseInfo.time }}</p>
-    <p v-if="status!==null&&status===1" :style = "{opacity:contentOpacity}" class="courseInfoContent">任务完成情况:{{ finishRateOfStu[0] }}/{{ finishRateOfStu[1] }}</p>
+    <p v-if="status!==null&&status===1" :style = "{opacity:contentOpacity}" class="courseInfoContent">任务完成情况：{{ finishRateOfStu[0] }}/{{ finishRateOfStu[1] }}</p>
     <div v-if="status !==null">
+      
       <div v-if="status!==1||targetClass!==null">
     <el-button
         v-if = "status == 1"

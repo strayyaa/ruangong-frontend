@@ -3,7 +3,7 @@
     <div class="background-layer">
       <h1 :style="{ 'margin-top': distance }" class="taskTitle" @click="scrollToTop">{{ exer.name }}(任务信息)</h1>
       <p :style="{ opacity: contentOpacity }" class="taskInfoContent">{{ formatDate(exer.begin_time) }} ~ {{ formatDate(exer.end_time) }}</p>
-      <p :style="{ opacity: contentOpacity }" class="taskInfoContent">是否可以多次提交：{{ exer.is_multi }}</p>
+      <p :style="{ opacity: contentOpacity }" class="taskInfoContent">{{ exer.is_multi?"可":"不可"}}多次提交</p>
       <p :style="{ opacity: contentOpacity }" class="totalScore">总分：{{ totalMaxScore }}分</p>
     </div>
   
