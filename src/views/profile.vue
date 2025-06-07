@@ -176,7 +176,7 @@ onMounted(() => {
   height: 100vh;
   width: 100vw;
   background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9)),
-              url('../assets/backgroundimage_example.jpg');
+              url('../assets/back.png');
   background-size: cover;
   background-position: center;
   z-index: -1;
