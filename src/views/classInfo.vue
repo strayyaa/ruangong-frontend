@@ -316,7 +316,7 @@
                         :show-file-list="false"
                         :on-success="handleUploadSuccessOfResourceUpdate"
                         :on-error="handleUploadErrorOfResourceUpdate">更新</el-upload></el-button>
-                        <el-button class="cardButton" @click="deleteRes(res.res_id)">删除</el-button>
+                        <el-button class="cardButton" v-if="status===0||status===2" @click="deleteRes(res.res_id)">删除</el-button>
                     </div>
                     </div>
                 </el-card>
@@ -803,7 +803,7 @@ const judgeStatus = async () => {
 }
 const finishRateOfStu = ref([]);
 const getFinishRate = async()=>{
-  const res = await getFinishRateOfStudent(localStorage.getItem('userId'),courseId.value,targetClass.value.class_id);
+  const res = await getFinishRateOfStudent(localStorage.getItem('userId'),courseId.value,classId.value);
   if(res.success){
     finishRateOfStu.value = res.data;
   }else{

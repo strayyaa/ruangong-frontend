@@ -9,7 +9,7 @@
     <p :style = "{opacity:contentOpacity}" class="courseInfoContent">学时：{{ courseInfo.time }}</p>
     <p v-if="status!==null&&status===1" :style = "{opacity:contentOpacity}" class="courseInfoContent">任务完成情况：{{ finishRateOfStu[0] }}/{{ finishRateOfStu[1] }}</p>
     <div v-if="status !==null">
-      
+
       <div v-if="status!==1||targetClass!==null">
     <el-button
         v-if = "status == 1"
@@ -182,6 +182,8 @@
         <!-- 班级页 -->
         <template v-else-if="tab === '班级'">
           <el-row :gutter="20">
+            <el-empty v-if="sampleClasses.length === 0" description="当前课程暂无班级" style="text-align: center; width: 100%; margin-top: 20px;">
+            </el-empty>
             <el-col :span="6" v-for="cls in sampleClasses" :key="cls.code">
               <el-card class="class-box" @click="jumpToClass(cls.class_id)">
                 <div class="color-block" :style="{ backgroundColor: cls.color.replace('rgb', 'rgba').replace(')', ', 0.5)') }"></div>
@@ -353,7 +355,7 @@
                 <el-button class="cardButton"><span style="margin-top: 14px;" @click="searchHistory(res.res_id)">查询历史</span></el-button>
                 <el-button class="cardButton"><span style="margin-top: 14px;" @click="previewRes(res.url)">预览</span></el-button>
                 <el-button class="cardButton"><span style="margin-top: 14px;" @click="downloadRes(res.res_id)">下载</span></el-button>
-                <el-button class="cardButton"><span style="margin-top: 14px;" @click="deleteRes(res.res_id)">删除</span></el-button>
+                <el-button class="cardButton" v-if="status===0||status===2"><span style="margin-top: 14px;" @click="deleteRes(res.res_id)">删除</span></el-button>
               </div>
             </div>
           </el-card>
@@ -845,6 +847,7 @@ const jumpToClass = (id) => {
         type: 'warning',
         duration: 2000
       });
+      return;
     }
   }
   router.push('/class/' + id);
